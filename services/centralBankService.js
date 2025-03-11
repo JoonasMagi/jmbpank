@@ -3,7 +3,7 @@ const CryptoService = require('./cryptoService');
 
 class CentralBankService {
   constructor() {
-    this.baseUrl = process.env.CENTRAL_BANK_URL || 'https://keskpank.com/api';
+    this.baseUrl = process.env.CENTRAL_BANK_URL || 'https://henno.cfd/central-bank';
     this.apiKey = process.env.API_KEY || '';
     this.testMode = process.env.TEST_MODE === 'true';
     
