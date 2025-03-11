@@ -84,6 +84,18 @@ apiRouter.use('/accounts', accountRoutes);
 apiRouter.use('/transactions', transactionRoutes);
 apiRouter.use('/users', userRoutes);
 
+// Special route for JWKS as .json file - needed for central bank registration
+app.get('/jwks.json', async (req, res) => {
+  try {
+    const CryptoService = require('./services/cryptoService');
+    const jwks = await CryptoService.getJWKS();
+    res.json(jwks);
+  } catch (error) {
+    console.error('Error getting JWKS:', error);
+    res.status(500).json({ error: 'Failed to get JWKS' });
+  }
+});
+
 // Root route
 apiRouter.get('/', (req, res) => {
   res.json({
@@ -93,6 +105,10 @@ apiRouter.get('/', (req, res) => {
       users: '/api/users',
       accounts: '/api/accounts',
       transactions: '/api/transactions'
+    },
+    centralBankEndpoints: {
+      jwksUrl: 'https://joonasmagi.me/jwks.json',
+      transactionUrl: 'https://joonasmagi.me/api/transactions/b2b'
     }
   });
 });
@@ -116,4 +132,6 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`JMB Pank server running on port ${PORT}`);
   console.log(`API Documentation available at http://localhost:${PORT}/api/docs`);
+  console.log(`JWKS available at http://localhost:${PORT}/jwks.json`);
+  console.log(`Transactions endpoint at http://localhost:${PORT}/api/transactions/b2b`);
 });
