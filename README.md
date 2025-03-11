@@ -31,6 +31,8 @@ cp .env.example .env
 ```
 
 4. Muuda .env failis olevad seadistused vastavalt vajadusele
+   - Veendu, et CENTRAL_BANK_URL=https://henno.cfd/central-bank
+   - Muuda TEST_MODE=false
 
 5. Käivita server
 ```bash
@@ -66,35 +68,35 @@ Antud rakendus järgib Keskpanga poolt nõutud standardeid rakenduste vaheliseks
 
 Täpsem spetsifikatsioon: [Keskpank SPECIFICATIONS.md](https://github.com/henno/keskpank/blob/master/SPECIFICATIONS.md)
 
-## Pankadevaheliste ülekannete probleemide lahendamine
+## Pankadevaheliste ülekannete seadistamine
 
-Kui sul on probleeme pankadevaheliste ülekannetega, proovi järgmisi lahendusi:
+Pankadevaheliste ülekannete tegemiseks on vaja:
 
-1. **Testi erinevaid keskpanga URL-e**
+1. **Õige keskpanga URL**
+   Veendu, et sinu .env failis on õige keskpanga URL:
+   ```
+   CENTRAL_BANK_URL=https://henno.cfd/central-bank
+   TEST_MODE=false
+   ```
+
+2. **Registreeri oma pank keskpangas**
+   - Külasta keskpanga lehte: https://henno.cfd/central-bank
+   - Registreeri oma pank, lisades:
+     - Panga nimi: "JMB Pank"
+     - Panga prefiks: "JMB"
+     - JWKS URL: "https://joonasmagi.me/jwks.json"
+     - Tehingute URL: "https://joonasmagi.me/api/transactions/b2b"
+
+3. **Salvesta API võti**
+   Pärast panga registreerimist saad API võtme, mis tuleb lisada .env faili:
+   ```
+   API_KEY=your_api_key_here
+   ```
+
+4. **Taaskäivita rakendus**
    ```bash
-   node test-central-bank.js
+   npm start
    ```
-   See skript proovib ühenduda erinevate potentsiaalsete keskpanga URL-idega ja teavitab, milline neist töötab.
-
-2. **Proovi erinevaid URL-e .env failis**
-   Muuda oma .env failis CENTRAL_BANK_URL väärtust, proovides järgmisi variante:
-   ```
-   CENTRAL_BANK_URL=https://keskpank.henno.ee/api
-   CENTRAL_BANK_URL=https://keskpank.henno.tech/api
-   CENTRAL_BANK_URL=http://keskpank.henno.tech/api
-   CENTRAL_BANK_URL=http://pank.henno.tech/api
-   ```
-
-3. **Lülita TEST_MODE välja**
-   Veendu, et .env failis on TEST_MODE=false
-
-4. **Kontrolli API võtit**
-   Kui sul on keskpangas registreeritud pank, peaksid olema saanud API võtme, mis tuleb lisada .env faili.
-
-5. **Kontrolli JWKS ja tehingute URL-e**
-   Veendu, et sinu JWKS ja tehingute URL-id on avalikult ligipääsetavad:
-   - JWKS URL: `https://joonasmagi.me/jwks.json`
-   - Tehingute URL: `https://joonasmagi.me/api/transactions/b2b`
 
 ## Nginx seadistamine
 
