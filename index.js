@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const swaggerJsDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
+const cors = require('cors');
 
 // Create data directory if not exists
 const dataDir = path.join(__dirname, 'data');
@@ -16,6 +17,11 @@ const db = require('./models/db');
 
 // Initialize Express app
 const app = express();
+
+// Enable CORS for all routes
+app.use(cors());
+
+// Parse JSON bodies
 app.use(express.json());
 
 // Initialize crypto service (generate keys on startup) after the database is set up
