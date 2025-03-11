@@ -24,6 +24,9 @@ app.use(cors());
 // Parse JSON bodies
 app.use(express.json());
 
+// Serve static files
+app.use(express.static(path.join(__dirname, 'public')));
+
 // Initialize crypto service (generate keys on startup) after the database is set up
 setTimeout(() => {
   const CryptoService = require('./services/cryptoService');
@@ -96,6 +99,11 @@ app.get('/jwks.json', async (req, res) => {
   }
 });
 
+// Also serve static jwks.json if exists
+app.get('/static-jwks.json', (req, res) => {
+  res.sendFile(path.join(__dirname, 'jwks.json'));
+});
+
 // Root route
 apiRouter.get('/', (req, res) => {
   res.json({
@@ -133,5 +141,6 @@ app.listen(PORT, () => {
   console.log(`JMB Pank server running on port ${PORT}`);
   console.log(`API Documentation available at http://localhost:${PORT}/api/docs`);
   console.log(`JWKS available at http://localhost:${PORT}/jwks.json`);
+  console.log(`Static JWKS available at http://localhost:${PORT}/static-jwks.json`);
   console.log(`Transactions endpoint at http://localhost:${PORT}/api/transactions/b2b`);
 });
