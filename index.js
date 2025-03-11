@@ -29,6 +29,7 @@ setTimeout(() => {
 // Routes
 const accountRoutes = require('./routes/accountRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 // Swagger configuration
 const swaggerOptions = {
@@ -47,7 +48,16 @@ const swaggerOptions = {
         url: `http://localhost:${process.env.PORT || 3000}`,
         description: 'Development server'
       }
-    ]
+    ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT'
+        }
+      }
+    }
   },
   apis: ['./controllers/*.js']
 };
@@ -58,12 +68,18 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 // API routes
 app.use('/accounts', accountRoutes);
 app.use('/transactions', transactionRoutes);
+app.use('/users', userRoutes);
 
 // Root route
 app.get('/', (req, res) => {
   res.json({
     message: 'Welcome to JMB Pank API',
-    documentation: '/api-docs'
+    documentation: '/api-docs',
+    endpoints: {
+      users: '/users',
+      accounts: '/accounts',
+      transactions: '/transactions'
+    }
   });
 });
 
