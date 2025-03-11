@@ -51,8 +51,8 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: `http://localhost:${process.env.PORT || 3000}`,
-        description: 'Development server'
+        url: `/api`,
+        description: 'API Base URL'
       }
     ],
     components: {
@@ -69,24 +69,37 @@ const swaggerOptions = {
 };
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
-// API routes
-app.use('/accounts', accountRoutes);
-app.use('/transactions', transactionRoutes);
-app.use('/users', userRoutes);
+// API routes with base path
+const apiRouter = express.Router();
+app.use('/api', apiRouter);
+
+// Mount Swagger UI at /api-docs
+apiRouter.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs, {
+  explorer: true
+}));
+
+// API endpoints
+apiRouter.use('/accounts', accountRoutes);
+apiRouter.use('/transactions', transactionRoutes);
+apiRouter.use('/users', userRoutes);
 
 // Root route
-app.get('/', (req, res) => {
+apiRouter.get('/', (req, res) => {
   res.json({
     message: 'Welcome to JMB Pank API',
-    documentation: '/api-docs',
+    documentation: '/api/docs',
     endpoints: {
-      users: '/users',
-      accounts: '/accounts',
-      transactions: '/transactions'
+      users: '/api/users',
+      accounts: '/api/accounts',
+      transactions: '/api/transactions'
     }
   });
+});
+
+// Root app route
+app.get('/', (req, res) => {
+  res.redirect('/api');
 });
 
 // Error handling middleware
@@ -102,5 +115,5 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`JMB Pank server running on port ${PORT}`);
-  console.log(`API Documentation available at http://localhost:${PORT}/api-docs`);
+  console.log(`API Documentation available at http://localhost:${PORT}/api/docs`);
 });
