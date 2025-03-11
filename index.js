@@ -11,19 +11,24 @@ if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
 
-// Initialize crypto service (generate keys on startup)
-const CryptoService = require('./services/cryptoService');
-CryptoService.createAndStoreKeyPair('1').catch(err => {
-  console.error('Failed to initialize crypto keys:', err);
-});
-
-// Routes
-const accountRoutes = require('./routes/accountRoutes');
-const transactionRoutes = require('./routes/transactionRoutes');
+// Initialize database first
+const db = require('./models/db');
 
 // Initialize Express app
 const app = express();
 app.use(express.json());
+
+// Initialize crypto service (generate keys on startup) after the database is set up
+setTimeout(() => {
+  const CryptoService = require('./services/cryptoService');
+  CryptoService.createAndStoreKeyPair('1').catch(err => {
+    console.error('Failed to initialize crypto keys:', err);
+  });
+}, 1000); // Delay crypto initialization to ensure DB tables are created
+
+// Routes
+const accountRoutes = require('./routes/accountRoutes');
+const transactionRoutes = require('./routes/transactionRoutes');
 
 // Swagger configuration
 const swaggerOptions = {
