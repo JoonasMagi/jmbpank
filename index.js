@@ -7,6 +7,11 @@ const swaggerUi = require('swagger-ui-express');
 const cors = require('cors');
 const errorHandler = require('./routes/errorHandler');
 
+// Set development mode if not specified
+if (!process.env.NODE_ENV) {
+  process.env.NODE_ENV = 'development';
+}
+
 // Create data directory if not exists
 const dataDir = path.join(__dirname, 'data');
 if (!fs.existsSync(dataDir)) {
@@ -121,6 +126,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Log initial application startup
 directLog('JMB Pank application starting up');
+directLog(`Environment: ${process.env.NODE_ENV}`);
 
 // Initialize crypto service (generate keys on startup) after the database is set up
 setTimeout(() => {
@@ -146,6 +152,7 @@ const transactionRoutes = require('./routes/transactionRoutes');
 const userRoutes = require('./routes/userRoutes');
 const sessionRoutes = require('./routes/sessionRoutes');
 const logRoutes = require('./routes/logRoutes');
+const testRoutes = require('./routes/testRoutes');
 
 // Swagger configuration
 const swaggerOptions = {
@@ -220,13 +227,15 @@ apiRouter.get('/', (req, res) => {
   
   res.json({
     message: 'Welcome to JMB Pank API',
+    environment: process.env.NODE_ENV,
     documentation: '/api/docs',
     endpoints: {
       users: '/api/users',
       accounts: '/api/accounts',
       transactions: '/api/transactions',
       sessions: '/api/sessions',
-      logs: '/api/logs'
+      logs: '/api/logs',
+      test: process.env.NODE_ENV !== 'production' ? '/api/test' : null
     },
     centralBankEndpoints: {
       jwksUrl: `${baseUrl}/api/transactions/jwks`,
@@ -287,6 +296,12 @@ apiRouter.use('/transactions', transactionRoutes);
 apiRouter.use('/users', userRoutes);
 apiRouter.use('/sessions', sessionRoutes);
 apiRouter.use('/logs', logRoutes);
+
+// Development-only test routes
+if (process.env.NODE_ENV !== 'production') {
+  apiRouter.use('/test', testRoutes);
+  console.log('Test routes enabled - FOR DEVELOPMENT USE ONLY');
+}
 
 // Root app route
 app.get('/', (req, res) => {
