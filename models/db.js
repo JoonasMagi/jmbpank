@@ -44,6 +44,7 @@ function initDatabase() {
         balance REAL DEFAULT 0,
         currency TEXT DEFAULT 'EUR',
         user_id INTEGER,
+        account_type TEXT DEFAULT 'checking',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id)
       )`, (err) => {
@@ -84,6 +85,20 @@ function initDatabase() {
           resolve();
         }
       });
+
+      // Add an index for user_id on accounts table
+      db.run(`CREATE INDEX IF NOT EXISTS idx_accounts_user_id ON accounts(user_id)`, (err) => {
+        if (err) console.error('Error creating accounts index:', err);
+      });
+
+      // Add indexes for transaction searches
+      db.run(`CREATE INDEX IF NOT EXISTS idx_transactions_account_from ON transactions(account_from)`, (err) => {
+        if (err) console.error('Error creating transactions account_from index:', err);
+      });
+
+      db.run(`CREATE INDEX IF NOT EXISTS idx_transactions_account_to ON transactions(account_to)`, (err) => {
+        if (err) console.error('Error creating transactions account_to index:', err);
+      });
     });
   });
 }
@@ -108,7 +123,7 @@ function run(sql, params = []) {
       if (err) {
         reject(err);
       } else {
-        resolve({ id: this.lastID, changes: this.changes });
+        resolve({ lastID: this.lastID, changes: this.changes });
       }
     });
   });
