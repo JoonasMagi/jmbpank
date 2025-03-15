@@ -245,11 +245,14 @@
                 fetch('/api/logs')
                     .then(response => response.json())
                     .then(data => {
-                        logs = data;
+                        // Make sure data is an array
+                        logs = Array.isArray(data) ? data : [];
                         applyFiltersAndRender();
                     })
                     .catch(error => {
                         logContainer.innerHTML = `<div class="no-logs">Error loading logs: ${error.message}</div>`;
+                        // Reset stats on error
+                        updateStats([]);
                     });
             }
             
@@ -311,6 +314,12 @@
             
             // Apply filters and render logs
             function applyFiltersAndRender() {
+                if (!Array.isArray(logs) || logs.length === 0) {
+                    logContainer.innerHTML = '<div class="no-logs">No logs found</div>';
+                    updateStats([]);
+                    return;
+                }
+                
                 const levelValue = levelFilter.value;
                 const searchValue = searchFilter.value.toLowerCase();
                 const codeValue = codeFilter.value.toUpperCase();
@@ -410,17 +419,19 @@
                     debug: 0
                 };
                 
-                allLogs.forEach(log => {
-                    if (counts[log.level] !== undefined) {
-                        counts[log.level]++;
-                    }
-                });
+                if (Array.isArray(allLogs) && allLogs.length > 0) {
+                    allLogs.forEach(log => {
+                        if (counts[log.level] !== undefined) {
+                            counts[log.level]++;
+                        }
+                    });
+                }
                 
                 infoCount.textContent = counts.info;
                 warnCount.textContent = counts.warn;
                 errorCount.textContent = counts.error;
                 debugCount.textContent = counts.debug;
-                totalCount.textContent = allLogs.length;
+                totalCount.textContent = allLogs.length || 0;
             }
             
             // Event listeners
