@@ -4,12 +4,15 @@ const { v4: uuidv4 } = require('uuid');
 class Account {
   /**
    * Create a new account
-   * @param {string} ownerName - The name of the account owner
-   * @param {string} currency - The currency of the account (default: EUR)
-   * @param {number} initialBalance - Initial balance (default: 0)
+   * @param {Object} params - Account parameters
+   * @param {number} params.userId - User ID who owns this account
+   * @param {string} params.ownerName - The name of the account owner
+   * @param {string} params.accountType - The type of account (checking, savings)
+   * @param {string} params.currency - The currency of the account (default: EUR)
+   * @param {number} params.initialBalance - Initial balance (default: 0)
    * @returns {Promise<Object>} Created account
    */
-  static async create(ownerName, currency = 'EUR', initialBalance = 0) {
+  static async create({ userId, ownerName, accountType = 'checking', currency = 'EUR', initialBalance = 0 }) {
     // Generate account number with bank prefix
     const bankPrefix = process.env.BANK_PREFIX || 'JMB';
     // Use first 3 chars of UUID (no dashes) and add a random 6 digits
@@ -17,11 +20,11 @@ class Account {
     
     try {
       const result = await run(
-        'INSERT INTO accounts (account_number, owner_name, balance, currency) VALUES (?, ?, ?, ?)',
-        [accountNumber, ownerName, initialBalance, currency]
+        'INSERT INTO accounts (account_number, user_id, owner_name, account_type, balance, currency) VALUES (?, ?, ?, ?, ?, ?)',
+        [accountNumber, userId, ownerName, accountType, initialBalance, currency]
       );
       
-      if (result.id) {
+      if (result.lastID) {
         return this.getByAccountNumber(accountNumber);
       }
       
@@ -40,6 +43,20 @@ class Account {
     try {
       const account = await get('SELECT * FROM accounts WHERE account_number = ?', [accountNumber]);
       return account || null;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Get accounts by user ID
+   * @param {number} userId - The user ID
+   * @returns {Promise<Array>} List of user accounts
+   */
+  static async getByUserId(userId) {
+    try {
+      const accounts = await query('SELECT * FROM accounts WHERE user_id = ?', [userId]);
+      return accounts;
     } catch (error) {
       throw error;
     }
