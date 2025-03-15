@@ -87,14 +87,39 @@ exports.register = async (req, res) => {
     
     // Validate input
     if (!username || !password || !fullName || !email) {
-      console.warn(`Registration failed for ${username}: Missing required fields`);
-      return res.status(400).json({ error: 'All fields are required' });
+      const errorResponse = {
+        error: 'All fields are required',
+        code: 'VALIDATION_001',
+        status: 400,
+        timestamp: new Date().toISOString(),
+        details: {
+          missingFields: Object.entries({
+            username, password, fullName, email
+          }).filter(([_, value]) => !value).map(([key]) => key)
+        }
+      };
+      
+      console.warn(`Registration failed [VALIDATION_001]: Missing required fields - ${JSON.stringify(errorResponse.details)}`);
+      return res.status(400).json(errorResponse);
     }
     
     // Validate password complexity
     if (password.length < 8) {
-      console.warn(`Registration failed for ${username}: Password too short`);
-      return res.status(400).json({ error: 'Password must be at least 8 characters' });
+      const errorResponse = {
+        error: 'Password must be at least 8 characters',
+        code: 'VALIDATION_002',
+        status: 400,
+        timestamp: new Date().toISOString(),
+        details: {
+          field: 'password',
+          reason: 'too_short',
+          minLength: 8,
+          actualLength: password.length
+        }
+      };
+      
+      console.warn(`Registration failed [VALIDATION_002]: Password too short - length: ${password.length}, required: 8`);
+      return res.status(400).json(errorResponse);
     }
     
     try {
@@ -105,23 +130,56 @@ exports.register = async (req, res) => {
       
       return res.status(201).json(user);
     } catch (dbError) {
-      console.error('Database error during user creation:', dbError);
-      // Use more specific error messages from the model
-      if (dbError.message === 'Username already exists') {
-        console.warn(`Registration failed: Username already exists - ${username}`);
-        return res.status(400).json({ error: dbError.message });
-      } else if (dbError.message === 'Email already exists') {
-        console.warn(`Registration failed: Email already exists - ${email}`);
-        return res.status(400).json({ error: dbError.message });
-      } else if (dbError.message === 'Username or email already exists') {
-        console.warn(`Registration failed: Username or email already exists - ${username}, ${email}`);
-        return res.status(400).json({ error: dbError.message });
+      console.error('Database error during user creation:', {
+        message: dbError.message,
+        code: dbError.code,
+        details: dbError.details,
+        originalError: dbError.originalError
+      });
+      
+      // Use the error status from the model or default to 400
+      const status = dbError.status || 400;
+      
+      const errorResponse = {
+        error: dbError.message,
+        code: dbError.code || 'UNKNOWN',
+        status,
+        timestamp: new Date().toISOString(),
+        details: dbError.details || {}
+      };
+      
+      // Log specific error types with their codes
+      if (dbError.code === User.ErrorCodes.USERNAME_EXISTS) {
+        console.warn(`Registration failed [${dbError.code}]: Username already exists - ${username}`);
+      } else if (dbError.code === User.ErrorCodes.EMAIL_EXISTS) {
+        console.warn(`Registration failed [${dbError.code}]: Email already exists - ${email}`);
+      } else if (dbError.code === User.ErrorCodes.CONSTRAINT_VIOLATION) {
+        console.warn(`Registration failed [${dbError.code}]: Constraint violation - ${JSON.stringify(dbError.details)}`);
+      } else if (dbError.code === User.ErrorCodes.DATABASE_ERROR) {
+        console.error(`Registration failed [${dbError.code}]: Database error - ${dbError.message}`);
+      } else {
+        console.error(`Registration failed [${dbError.code || 'UNKNOWN'}]: ${dbError.message}`);
       }
-      throw dbError;
+      
+      return res.status(status).json(errorResponse);
     }
   } catch (error) {
-    console.error('Error in register controller:', error);
-    return res.status(500).json({ error: 'Failed to register user', details: error.message });
+    // For unexpected errors not caught by the specific handlers
+    const errorResponse = {
+      error: 'Failed to register user',
+      code: 'SERVER_001',
+      status: 500,
+      timestamp: new Date().toISOString(),
+      details: { message: error.message }
+    };
+    
+    console.error('Unexpected error in register controller:', {
+      message: error.message,
+      stack: error.stack,
+      code: errorResponse.code
+    });
+    
+    return res.status(500).json(errorResponse);
   }
 };
 
@@ -178,16 +236,35 @@ exports.login = async (req, res) => {
     
     // Validate input
     if (!username || !password) {
-      console.warn(`Login failed: Missing credentials for ${username || 'unknown user'}`);
-      return res.status(400).json({ error: 'Username and password are required' });
+      const errorResponse = {
+        error: 'Username and password are required',
+        code: 'AUTH_001',
+        status: 400,
+        timestamp: new Date().toISOString(),
+        details: {
+          missingFields: Object.entries({
+            username, password
+          }).filter(([_, value]) => !value).map(([key]) => key)
+        }
+      };
+      
+      console.warn(`Login failed [AUTH_001]: Missing credentials for ${username || 'unknown user'} - ${JSON.stringify(errorResponse.details)}`);
+      return res.status(400).json(errorResponse);
     }
     
     // Validate credentials
     const user = await User.validateCredentials(username, password);
     
     if (!user) {
-      console.warn(`Login failed: Invalid credentials for ${username}`);
-      return res.status(401).json({ error: 'Invalid credentials' });
+      const errorResponse = {
+        error: 'Invalid credentials',
+        code: 'AUTH_002',
+        status: 401,
+        timestamp: new Date().toISOString()
+      };
+      
+      console.warn(`Login failed [AUTH_002]: Invalid credentials for ${username}`);
+      return res.status(401).json(errorResponse);
     }
     
     // Generate JWT
@@ -205,8 +282,34 @@ exports.login = async (req, res) => {
     
     res.json({ user, token });
   } catch (error) {
-    console.error(`Error during login for user ${req.body.username}:`, error);
-    res.status(500).json({ error: 'Failed to login' });
+    // For database errors from the model
+    if (error.code && error.code === User.ErrorCodes.DATABASE_ERROR) {
+      const errorResponse = {
+        error: 'Authentication error',
+        code: error.code,
+        status: error.status || 500,
+        timestamp: new Date().toISOString(),
+        details: error.details || {}
+      };
+      
+      console.error(`Login failed [${error.code}]: Database error during login for ${req.body.username} - ${error.message}`);
+      return res.status(errorResponse.status).json(errorResponse);
+    }
+    
+    // For unexpected errors
+    const errorResponse = {
+      error: 'Failed to login',
+      code: 'SERVER_002',
+      status: 500,
+      timestamp: new Date().toISOString()
+    };
+    
+    console.error(`Login failed [SERVER_002]: Unexpected error for user ${req.body.username}:`, {
+      message: error.message,
+      stack: error.stack
+    });
+    
+    res.status(500).json(errorResponse);
   }
 };
 
@@ -239,8 +342,20 @@ exports.getAllUsers = async (req, res) => {
     console.log(`Retrieved ${users.length} users`);
     res.json(users);
   } catch (error) {
-    console.error('Error getting users:', error);
-    res.status(500).json({ error: 'Failed to retrieve users' });
+    const errorResponse = {
+      error: 'Failed to retrieve users',
+      code: error.code || 'SERVER_003',
+      status: error.status || 500,
+      timestamp: new Date().toISOString()
+    };
+    
+    console.error(`Error getting users [${errorResponse.code}]:`, {
+      message: error.message,
+      details: error.details,
+      stack: error.stack
+    });
+    
+    res.status(errorResponse.status).json(errorResponse);
   }
 };
 
@@ -275,22 +390,49 @@ exports.getProfile = async (req, res) => {
   try {
     // Note: This assumes authentication middleware has set req.user
     if (!req.user) {
-      console.warn(`Profile request rejected: No authentication`);
-      return res.status(401).json({ error: 'Unauthorized' });
+      const errorResponse = {
+        error: 'Unauthorized',
+        code: 'AUTH_003',
+        status: 401,
+        timestamp: new Date().toISOString()
+      };
+      
+      console.warn(`Profile request rejected [AUTH_003]: No authentication`);
+      return res.status(401).json(errorResponse);
     }
     
     const user = await User.getByUsername(req.user.username);
     
     if (!user) {
-      console.warn(`Profile not found for authenticated user: ${req.user.username}`);
-      return res.status(404).json({ error: 'User not found' });
+      const errorResponse = {
+        error: 'User not found',
+        code: 'USER_NOT_FOUND',
+        status: 404,
+        timestamp: new Date().toISOString(),
+        details: { username: req.user.username }
+      };
+      
+      console.warn(`Profile not found [USER_NOT_FOUND] for authenticated user: ${req.user.username}`);
+      return res.status(404).json(errorResponse);
     }
     
     console.log(`Profile retrieved for user: ${user.username}`);
     res.json(User.excludePassword(user));
   } catch (error) {
-    console.error(`Error getting profile for user ${req.user?.username}:`, error);
-    res.status(500).json({ error: 'Failed to retrieve profile' });
+    const errorResponse = {
+      error: 'Failed to retrieve profile',
+      code: error.code || 'SERVER_004',
+      status: error.status || 500,
+      timestamp: new Date().toISOString()
+    };
+    
+    console.error(`Error getting profile [${errorResponse.code}] for user ${req.user?.username}:`, {
+      message: error.message,
+      details: error.details,
+      stack: error.stack
+    });
+    
+    res.status(errorResponse.status).json(errorResponse);
   }
 };
 
@@ -319,8 +461,15 @@ exports.logout = async (req, res) => {
   try {
     // Note: This assumes authentication middleware has set req.user
     if (!req.user) {
-      console.warn(`Logout rejected: No authentication`);
-      return res.status(401).json({ error: 'Unauthorized' });
+      const errorResponse = {
+        error: 'Unauthorized',
+        code: 'AUTH_004',
+        status: 401,
+        timestamp: new Date().toISOString()
+      };
+      
+      console.warn(`Logout rejected [AUTH_004]: No authentication`);
+      return res.status(401).json(errorResponse);
     }
     
     // Add token to blacklist (in-memory for simplicity)
@@ -329,9 +478,24 @@ exports.logout = async (req, res) => {
     global.tokenBlacklist.add(token);
     
     console.log(`User ${req.user.username} logged out, token blacklisted`);
-    res.status(200).json({ message: 'Logout successful' });
+    res.status(200).json({ 
+      message: 'Logout successful',
+      code: 'AUTH_SUCCESS',
+      timestamp: new Date().toISOString()
+    });
   } catch (error) {
-    console.error(`Error logging out user ${req.user?.username}:`, error);
-    res.status(500).json({ error: 'Failed to logout' });
+    const errorResponse = {
+      error: 'Failed to logout',
+      code: 'SERVER_005',
+      status: 500,
+      timestamp: new Date().toISOString()
+    };
+    
+    console.error(`Error logging out user [SERVER_005] ${req.user?.username}:`, {
+      message: error.message,
+      stack: error.stack
+    });
+    
+    res.status(500).json(errorResponse);
   }
 };
