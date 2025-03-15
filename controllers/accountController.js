@@ -102,6 +102,11 @@ exports.getAccount = async (req, res) => {
       return res.status(404).json({ error: 'Account not found' });
     }
     
+    // Ensure the account belongs to the authenticated user
+    if (account.user_id !== req.user.id) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    
     res.json(account);
   } catch (error) {
     console.error('Error getting account:', error);

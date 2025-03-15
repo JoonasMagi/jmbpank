@@ -259,3 +259,43 @@ exports.getProfile = async (req, res) => {
     res.status(500).json({ error: 'Failed to retrieve profile' });
   }
 };
+
+/**
+ * Logout user
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+/**
+ * @swagger
+ * /users/logout:
+ *   post:
+ *     summary: Logout user
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Logout successful
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+exports.logout = async (req, res) => {
+  try {
+    // Note: This assumes authentication middleware has set req.user
+    if (!req.user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    // Add token to blacklist (in-memory for simplicity)
+    const token = req.headers.authorization.split(' ')[1];
+    global.tokenBlacklist = global.tokenBlacklist || new Set();
+    global.tokenBlacklist.add(token);
+    
+    res.status(200).json({ message: 'Logout successful' });
+  } catch (error) {
+    console.error('Error logging out:', error);
+    res.status(500).json({ error: 'Failed to logout' });
+  }
+};

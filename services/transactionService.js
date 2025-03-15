@@ -158,7 +158,8 @@ class TransactionService {
       
       // Return receiver information
       return {
-        receiverName: receiverAccount.owner_name
+        receiverName: receiverAccount.owner_name,
+        status: 'completed'
       };
     } catch (error) {
       console.error('Incoming transaction processing error:', error);

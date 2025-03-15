@@ -9,53 +9,49 @@ class Transaction {
    * @returns {Promise<Object>} Created transaction
    */
   static async create(data) {
-    const { 
-      accountFrom, 
-      accountTo, 
-      amount, 
+    const {
+      accountFrom,
+      accountTo,
+      amount,
       currency = 'EUR',
       explanation = '',
       senderName,
       receiverName = null,
       status = 'pending'
     } = data;
-    
+
     const transactionId = uuidv4();
-    
-    try {
-      const result = await run(
-        `INSERT INTO transactions (
-          transaction_id, 
-          account_from, 
-          account_to, 
-          amount, 
-          currency, 
-          explanation, 
-          sender_name, 
-          receiver_name, 
-          status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          transactionId,
-          accountFrom,
-          accountTo,
-          amount,
-          currency,
-          explanation,
-          senderName,
-          receiverName,
-          status
-        ]
-      );
-      
-      if (result.id) {
-        return this.getByTransactionId(transactionId);
-      }
-      
-      throw new Error('Failed to create transaction');
-    } catch (error) {
-      throw error;
+
+    const result = await run(
+      `INSERT INTO transactions (
+        transaction_id,
+        account_from,
+        account_to,
+        amount,
+        currency, 
+        explanation,
+        sender_name,
+        receiver_name,
+        status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        transactionId,
+        accountFrom,
+        accountTo,
+        amount,
+        currency,
+        explanation,
+        senderName,
+        receiverName,
+        status
+      ]
+    );
+
+    if (result.id) {
+      return this.getByTransactionId(transactionId);
     }
+
+    throw new Error('Failed to create transaction');
   }
 
   /**

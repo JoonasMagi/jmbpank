@@ -9,7 +9,7 @@ router.get('/account/:accountNumber', transactionController.getAccountTransactio
 router.post('/', transactionController.createTransaction);
 
 // POST process bank-to-bank transaction
-router.post('/b2b', transactionController.processB2BTransaction);
+router.post('/transactions/b2b', transactionController.processB2BTransaction);
 
 // GET JWKS (JSON Web Key Set)
 router.get('/jwks', transactionController.getJWKS);

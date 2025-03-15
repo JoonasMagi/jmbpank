@@ -25,14 +25,19 @@ class CentralBankService {
         return this._mockGetBankInfo(bankPrefix);
       }
 
-      const response = await axios.get(`${this.baseUrl}/banks/${bankPrefix}`, {
+      const response = await axios.get(`${this.baseUrl}/banks`, {
         headers: {
           'Authorization': `Bearer ${this.apiKey}`
         }
       });
 
-      console.log(`Bank info received for ${bankPrefix}:`, response.data);
-      return response.data;
+      console.log(`Bank info received:`, response.data);
+      // Filter the bank information based on the bankPrefix
+      const bankInfo = response.data.find(bank => bank.bankPrefix === bankPrefix);
+      if (!bankInfo) {
+        throw new Error(`Bank with prefix ${bankPrefix} not found`);
+      }
+      return bankInfo;
     } catch (error) {
       console.error('Error getting bank info:', error.message);
       if (error.response) {
@@ -91,6 +96,11 @@ class CentralBankService {
       if (error.response) {
         console.error('Response data:', error.response.data);
         console.error('Response status:', error.response.status);
+      }
+      // Retry logic or fallback mechanism
+      if (error.response && error.response.status >= 500) {
+        console.log('Retrying transaction due to server error...');
+        // Implement retry logic here
       }
       throw new Error(`Failed to send transaction: ${error.message}`);
     }
