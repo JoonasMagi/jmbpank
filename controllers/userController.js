@@ -79,6 +79,8 @@ const jwt = require('jsonwebtoken');
  */
 exports.register = async (req, res) => {
   try {
+    console.log('Registration request received:', req.body);
+    
     const { username, password, fullName, email } = req.body;
     
     console.log(`Registration attempt for username: ${username}, email: ${email}`);
@@ -96,18 +98,23 @@ exports.register = async (req, res) => {
     }
     
     // Create user
-    const user = await User.create(username, password, fullName, email);
-    console.log(`User registered successfully: ${username} (ID: ${user.id})`);
-    
-    res.status(201).json(user);
-  } catch (error) {
-    if (error.message === 'Username already exists') {
-      console.warn(`Registration failed: Username already exists - ${req.body.username}`);
-      return res.status(400).json({ error: error.message });
+    console.log('Creating user in database...');
+    try {
+      const user = await User.create(username, password, fullName, email);
+      console.log(`User registered successfully: ${username} (ID: ${user.id})`);
+      
+      return res.status(201).json(user);
+    } catch (dbError) {
+      console.error('Database error during user creation:', dbError);
+      if (dbError.message === 'Username already exists') {
+        console.warn(`Registration failed: Username already exists - ${username}`);
+        return res.status(400).json({ error: dbError.message });
+      }
+      throw dbError;
     }
-    
-    console.error('Error creating user:', error);
-    res.status(500).json({ error: 'Failed to register user' });
+  } catch (error) {
+    console.error('Error in register controller:', error);
+    return res.status(500).json({ error: 'Failed to register user', details: error.message });
   }
 };
 
