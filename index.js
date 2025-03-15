@@ -5,6 +5,7 @@ const path = require('path');
 const swaggerJsDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const cors = require('cors');
+const errorHandler = require('./routes/errorHandler');
 
 // Create data directory if not exists
 const dataDir = path.join(__dirname, 'data');
@@ -99,11 +100,21 @@ directLog('Database initialization started');
 // Initialize Express app
 const app = express();
 
-// Enable CORS for all routes
-app.use(cors());
+// Configure CORS with specific options
+app.use(cors({
+  origin: '*', // Allow all origins for now
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  preflightContinue: false,
+  optionsSuccessStatus: 204
+}));
 
-// Parse JSON bodies
-app.use(express.json());
+// Parse JSON bodies with larger size limit
+app.use(express.json({ limit: '10mb' }));
+
+// Parse URL-encoded bodies with larger size limit
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
@@ -178,12 +189,51 @@ apiRouter.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs, {
   explorer: true
 }));
 
-// API endpoints
-apiRouter.use('/accounts', accountRoutes);
-apiRouter.use('/transactions', transactionRoutes);
-apiRouter.use('/users', userRoutes);
-apiRouter.use('/sessions', sessionRoutes);
-apiRouter.use('/logs', logRoutes);
+// Special route for JWKS as .json file - needed for central bank registration
+app.get('/api/transactions/jwks', async (req, res) => {
+  try {
+    const CryptoService = require('./services/cryptoService');
+    const jwks = await CryptoService.getJWKS();
+    res.json(jwks);
+  } catch (error) {
+    const timestamp = new Date().toISOString();
+    const logMessage = `[${timestamp}] ERROR: Error getting JWKS: ${error.message}`;
+    originalConsoleError(logMessage);
+    logStream.write(`${logMessage}\n${error.stack}\n`);
+    res.status(500).json({ error: 'Failed to get JWKS' });
+  }
+});
+
+// Handle the legacy /jwks.json route by redirecting to the proper endpoint
+app.get('/jwks.json', (req, res) => {
+  const timestamp = new Date().toISOString();
+  const logMessage = `[${timestamp}] WARN: Legacy JWKS endpoint accessed at /jwks.json, redirecting to /api/transactions/jwks`;
+  originalConsoleWarn(logMessage);
+  logStream.write(`${logMessage}\n`);
+  res.redirect('/api/transactions/jwks');
+});
+
+// Root route for API
+apiRouter.get('/', (req, res) => {
+  // Get the base URL for central bank endpoints
+  const baseUrl = `${req.protocol}://${req.get('host')}`;
+  
+  res.json({
+    message: 'Welcome to JMB Pank API',
+    documentation: '/api/docs',
+    endpoints: {
+      users: '/api/users',
+      accounts: '/api/accounts',
+      transactions: '/api/transactions',
+      sessions: '/api/sessions',
+      logs: '/api/logs'
+    },
+    centralBankEndpoints: {
+      jwksUrl: `${baseUrl}/api/transactions/jwks`,
+      transactionUrl: `${baseUrl}/api/transactions/b2b`
+    }
+  });
+});
 
 // Log requests
 app.use((req, res, next) => {
@@ -231,69 +281,20 @@ app.use((req, res, next) => {
   next();
 });
 
-// Special route for JWKS as .json file - needed for central bank registration
-app.get('/api/transactions/jwks', async (req, res) => {
-  try {
-    const CryptoService = require('./services/cryptoService');
-    const jwks = await CryptoService.getJWKS();
-    res.json(jwks);
-  } catch (error) {
-    const timestamp = new Date().toISOString();
-    const logMessage = `[${timestamp}] ERROR: Error getting JWKS: ${error.message}`;
-    originalConsoleError(logMessage);
-    logStream.write(`${logMessage}\n${error.stack}\n`);
-    res.status(500).json({ error: 'Failed to get JWKS' });
-  }
-});
-
-// Handle the legacy /jwks.json route by redirecting to the proper endpoint
-app.get('/jwks.json', (req, res) => {
-  const timestamp = new Date().toISOString();
-  const logMessage = `[${timestamp}] WARN: Legacy JWKS endpoint accessed at /jwks.json, redirecting to /api/transactions/jwks`;
-  originalConsoleWarn(logMessage);
-  logStream.write(`${logMessage}\n`);
-  res.redirect('/api/transactions/jwks');
-});
-
-// Root route
-apiRouter.get('/', (req, res) => {
-  // Get the base URL for central bank endpoints
-  const baseUrl = `${req.protocol}://${req.get('host')}`;
-  
-  res.json({
-    message: 'Welcome to JMB Pank API',
-    documentation: '/api/docs',
-    endpoints: {
-      users: '/api/users',
-      accounts: '/api/accounts',
-      transactions: '/api/transactions',
-      sessions: '/api/sessions',
-      logs: '/api/logs'
-    },
-    centralBankEndpoints: {
-      jwksUrl: `${baseUrl}/api/transactions/jwks`,
-      transactionUrl: `${baseUrl}/api/transactions/b2b`
-    }
-  });
-});
+// API endpoints - mount these AFTER the request logging middleware
+apiRouter.use('/accounts', accountRoutes);
+apiRouter.use('/transactions', transactionRoutes);
+apiRouter.use('/users', userRoutes);
+apiRouter.use('/sessions', sessionRoutes);
+apiRouter.use('/logs', logRoutes);
 
 // Root app route
 app.get('/', (req, res) => {
   res.redirect('/api');
 });
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  const timestamp = new Date().toISOString();
-  const logMessage = `[${timestamp}] ERROR: Error in ${req.method} ${req.url}: ${err.message}`;
-  originalConsoleError(logMessage);
-  logStream.write(`${logMessage}\n${err.stack}\n`);
-  
-  res.status(500).json({
-    error: 'Server error',
-    message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
-  });
-});
+// Add the custom error handler middleware as the last middleware
+app.use(errorHandler);
 
 // Simulate some initial log messages for testing - use direct logging to avoid recursion
 logStream.write(`[${new Date().toISOString()}] INFO: Application initialization completed\n`);
