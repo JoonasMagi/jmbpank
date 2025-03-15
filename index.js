@@ -88,7 +88,7 @@ apiRouter.use('/transactions', transactionRoutes);
 apiRouter.use('/users', userRoutes);
 
 // Special route for JWKS as .json file - needed for central bank registration
-app.get('/jwks.json', async (req, res) => {
+app.get('/api/transactions/jwks', async (req, res) => {
   try {
     const CryptoService = require('./services/cryptoService');
     const jwks = await CryptoService.getJWKS();
@@ -97,11 +97,6 @@ app.get('/jwks.json', async (req, res) => {
     console.error('Error getting JWKS:', error);
     res.status(500).json({ error: 'Failed to get JWKS' });
   }
-});
-
-// Also serve static jwks.json if exists
-app.get('/static-jwks.json', (req, res) => {
-  res.sendFile(path.join(__dirname, 'jwks.json'));
 });
 
 // Root route
@@ -140,7 +135,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`JMB Pank server running on port ${PORT}`);
   console.log(`API Documentation available at http://localhost:${PORT}/api/docs`);
-  console.log(`JWKS available at http://localhost:${PORT}/jwks.json`);
-  console.log(`Static JWKS available at http://localhost:${PORT}/static-jwks.json`);
-  console.log(`Transactions endpoint at http://localhost:${PORT}/api/transactions/b2b`);
+  console.log(`JWKS available at http://localhost:${PORT}/api/transactions/jwks`);
 });

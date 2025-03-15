@@ -174,7 +174,7 @@ class CentralBankService {
       prefix: bankPrefix,
       name: `${bankPrefix} Test Bank`,
       transactionUrl: 'http://localhost:3000/api/transactions/b2b',
-      jwksUrl: 'http://localhost:3000/jwks.json'
+      jwksUrl: 'http://localhost:3000/api/transactions/jwks'
     };
   }
 
