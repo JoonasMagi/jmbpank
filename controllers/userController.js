@@ -97,17 +97,24 @@ exports.register = async (req, res) => {
       return res.status(400).json({ error: 'Password must be at least 8 characters' });
     }
     
-    // Create user
-    console.log('Creating user in database...');
     try {
+      // Create user
+      console.log('Creating user in database...');
       const user = await User.create(username, password, fullName, email);
       console.log(`User registered successfully: ${username} (ID: ${user.id})`);
       
       return res.status(201).json(user);
     } catch (dbError) {
       console.error('Database error during user creation:', dbError);
+      // Use more specific error messages from the model
       if (dbError.message === 'Username already exists') {
         console.warn(`Registration failed: Username already exists - ${username}`);
+        return res.status(400).json({ error: dbError.message });
+      } else if (dbError.message === 'Email already exists') {
+        console.warn(`Registration failed: Email already exists - ${email}`);
+        return res.status(400).json({ error: dbError.message });
+      } else if (dbError.message === 'Username or email already exists') {
+        console.warn(`Registration failed: Username or email already exists - ${username}, ${email}`);
         return res.status(400).json({ error: dbError.message });
       }
       throw dbError;

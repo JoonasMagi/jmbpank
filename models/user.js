@@ -43,8 +43,16 @@ class User {
       
       throw new Error('Failed to create user');
     } catch (error) {
+      // Handle SQLite constraint violation (username/email unique constraint)
       if (error.code === 'SQLITE_CONSTRAINT') {
-        throw new Error('Username already exists');
+        // Check if it's a username or email constraint
+        if (error.message && error.message.includes('UNIQUE constraint failed: users.username')) {
+          throw new Error('Username already exists');
+        } else if (error.message && error.message.includes('UNIQUE constraint failed: users.email')) {
+          throw new Error('Email already exists');
+        } else {
+          throw new Error('Username or email already exists');
+        }
       }
       throw error;
     }
