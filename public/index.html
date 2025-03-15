@@ -3,193 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JMB Pank</title>
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/logs.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <title>JMB Pank - Banking Application</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            color: #0066cc;
+        }
+        
+        .card {
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card h2 {
+            color: #0066cc;
+            margin-top: 0;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+        }
+        
+        ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        
+        li {
+            margin-bottom: 10px;
+        }
+        
+        a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        .btn {
+            display: inline-block;
+            background-color: #0066cc;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            margin-top: 10px;
+        }
+        
+        .btn:hover {
+            background-color: #0055aa;
+            text-decoration: none;
+        }
+        
+        footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .dev-tools {
+            background-color: #ffe8e8;
+            border-left: 4px solid #ff6b6b;
+        }
+    </style>
 </head>
 <body>
-    <div class="app">
-        <header>
-            <div class="logo">
-                <h1>JMB Pank</h1>
-            </div>
-            <div id="user-info" class="hidden">
-                <span id="username-display"></span>
-                <button id="logs-btn" class="btn secondary" title="View Logs">
-                    <i class="fas fa-list-alt"></i> Logs
-                </button>
-                <button id="logout-btn" class="btn secondary">
-                    <i class="fas fa-sign-out-alt"></i> Log out
-                </button>
-            </div>
-        </header>
-
-        <main>
-            <!-- Login and Register Forms -->
-            <div id="auth-container">
-                <div class="tabs">
-                    <button class="tab-btn active" data-tab="login">Login</button>
-                    <button class="tab-btn" data-tab="register">Register</button>
-                </div>
-                
-                <div id="login-form" class="form-container active">
-                    <h2>Login to your account</h2>
-                    <form id="login">
-                        <div class="form-group">
-                            <label for="login-username">Username</label>
-                            <input type="text" id="login-username" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="login-password">Password</label>
-                            <input type="password" id="login-password" required>
-                        </div>
-                        <button type="submit" class="btn primary">Login</button>
-                    </form>
-                    <div id="login-error" class="error-message"></div>
-                </div>
-                
-                <div id="register-form" class="form-container">
-                    <h2>Create a new account</h2>
-                    <form id="register">
-                        <div class="form-group">
-                            <label for="register-username">Username</label>
-                            <input type="text" id="register-username" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="register-fullname">Full Name</label>
-                            <input type="text" id="register-fullname" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="register-email">Email</label>
-                            <input type="email" id="register-email" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="register-password">Password</label>
-                            <input type="password" id="register-password" required>
-                            <span class="help-text">Password must be at least 8 characters long</span>
-                        </div>
-                        <button type="submit" class="btn primary">Register</button>
-                    </form>
-                    <div id="register-error" class="error-message"></div>
-                    <div id="register-success" class="success-message"></div>
-                </div>
-            </div>
-
-            <!-- Dashboard -->
-            <div id="dashboard" class="hidden">
-                <div class="dashboard-section">
-                    <h2>My Accounts</h2>
-                    <button id="create-account-btn" class="btn secondary">
-                        <i class="fas fa-plus"></i> Create New Account
-                    </button>
-                    <div id="accounts-list" class="card-container">
-                        <!-- Account cards will be added here dynamically -->
-                        <div class="loading">Loading accounts...</div>
-                    </div>
-                </div>
-                
-                <div class="dashboard-section">
-                    <h2>Recent Transactions</h2>
-                    <div id="transactions-container">
-                        <div id="transactions-list">
-                            <!-- Transactions will be added here dynamically -->
-                            <div class="loading">Loading transactions...</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- New Transaction Modal -->
-            <div id="transaction-modal" class="modal">
-                <div class="modal-content">
-                    <span class="close">&times;</span>
-                    <h2>New Transaction</h2>
-                    <form id="transaction-form">
-                        <div class="form-group">
-                            <label for="from-account">From Account</label>
-                            <select id="from-account" required>
-                                <!-- Options will be added here dynamically -->
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="to-account">To Account</label>
-                            <input type="text" id="to-account" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="amount">Amount</label>
-                            <input type="number" id="amount" min="0.01" step="0.01" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="currency">Currency</label>
-                            <select id="currency" required>
-                                <option value="EUR" selected>EUR</option>
-                                <option value="USD">USD</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="explanation">Explanation</label>
-                            <textarea id="explanation"></textarea>
-                        </div>
-                        <button type="submit" class="btn primary">Send Money</button>
-                    </form>
-                    <div id="transaction-error" class="error-message"></div>
-                    <div id="transaction-success" class="success-message"></div>
-                </div>
-            </div>
-
-            <!-- Create Account Modal -->
-            <div id="create-account-modal" class="modal">
-                <div class="modal-content">
-                    <span class="close">&times;</span>
-                    <h2>Create New Account</h2>
-                    <form id="create-account-form">
-                        <div class="form-group">
-                            <label for="account-type">Account Type</label>
-                            <select id="account-type" required>
-                                <option value="checking">Checking Account</option>
-                                <option value="savings">Savings Account</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="account-currency">Currency</label>
-                            <select id="account-currency" required>
-                                <option value="EUR" selected>EUR</option>
-                                <option value="USD">USD</option>
-                            </select>
-                        </div>
-                        <button type="submit" class="btn primary">Create Account</button>
-                    </form>
-                    <div id="create-account-error" class="error-message"></div>
-                    <div id="create-account-success" class="success-message"></div>
-                </div>
-            </div>
-        </main>
-
-        <!-- Logs Panel -->
-        <div id="logs-panel" class="hidden">
-            <div class="logs-header">
-                <h2>Application Logs</h2>
-                <button id="close-logs-btn">&times;</button>
-            </div>
-            <div id="log-files">
-                <!-- Log file selector will be added here dynamically -->
-            </div>
-            <div id="logs-container">
-                <!-- Log content will be added here dynamically -->
-                <div class="loading">Loading logs...</div>
-            </div>
-        </div>
-
-        <footer>
-            <p>&copy; 2025 JMB Pank. All rights reserved.</p>
-        </footer>
+    <header>
+        <h1>Welcome to JMB Pank</h1>
+        <p>Simple banking application with interbank transaction support</p>
+    </header>
+    
+    <div class="card">
+        <h2>API Documentation</h2>
+        <p>Explore the available API endpoints and how to use them:</p>
+        <a href="/api/docs" class="btn">API Documentation</a>
     </div>
-
-    <script src="js/auth.js"></script>
-    <script src="js/accounts.js"></script>
-    <script src="js/transactions.js"></script>
-    <script src="js/logs.js"></script>
-    <script src="js/app.js"></script>
+    
+    <div class="card">
+        <h2>Banking Features</h2>
+        <ul>
+            <li><strong>Account Management</strong> - Create and manage accounts</li>
+            <li><strong>Local Transfers</strong> - Transfer money between your accounts</li>
+            <li><strong>Interbank Transfers</strong> - Send money to other banks via Central Bank</li>
+            <li><strong>Secure Authentication</strong> - JWT-based authentication system</li>
+        </ul>
+    </div>
+    
+    <div class="card dev-tools">
+        <h2>Developer Tools</h2>
+        <p><strong>Note:</strong> These tools are for development purposes only.</p>
+        <ul>
+            <li><a href="/api/logs/viewer">Log Viewer</a> - View and analyze application logs</li>
+            <li><a href="/test/register.html">Test Registration</a> - Test user registration</li>
+            <li><a href="/test/users.html">View Users</a> - List all registered users</li>
+        </ul>
+    </div>
+    
+    <div class="card">
+        <h2>API Endpoints</h2>
+        <p>Here are some of the main API endpoints:</p>
+        <ul>
+            <li><code>/api/users/register</code> - Register a new user</li>
+            <li><code>/api/users/login</code> - User login</li>
+            <li><code>/api/accounts</code> - Manage accounts</li>
+            <li><code>/api/transactions</code> - Make transactions</li>
+        </ul>
+    </div>
+    
+    <footer>
+        <p>JMB Pank &copy; 2025 - A simple banking application</p>
+    </footer>
 </body>
 </html>
