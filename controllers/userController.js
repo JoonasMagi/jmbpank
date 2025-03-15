@@ -81,22 +81,28 @@ exports.register = async (req, res) => {
   try {
     const { username, password, fullName, email } = req.body;
     
+    console.log(`Registration attempt for username: ${username}, email: ${email}`);
+    
     // Validate input
     if (!username || !password || !fullName || !email) {
+      console.warn(`Registration failed for ${username}: Missing required fields`);
       return res.status(400).json({ error: 'All fields are required' });
     }
     
     // Validate password complexity
     if (password.length < 8) {
+      console.warn(`Registration failed for ${username}: Password too short`);
       return res.status(400).json({ error: 'Password must be at least 8 characters' });
     }
     
     // Create user
     const user = await User.create(username, password, fullName, email);
+    console.log(`User registered successfully: ${username} (ID: ${user.id})`);
     
     res.status(201).json(user);
   } catch (error) {
     if (error.message === 'Username already exists') {
+      console.warn(`Registration failed: Username already exists - ${req.body.username}`);
       return res.status(400).json({ error: error.message });
     }
     
@@ -154,8 +160,11 @@ exports.login = async (req, res) => {
   try {
     const { username, password } = req.body;
     
+    console.log(`Login attempt for username: ${username}`);
+    
     // Validate input
     if (!username || !password) {
+      console.warn(`Login failed: Missing credentials for ${username || 'unknown user'}`);
       return res.status(400).json({ error: 'Username and password are required' });
     }
     
@@ -163,6 +172,7 @@ exports.login = async (req, res) => {
     const user = await User.validateCredentials(username, password);
     
     if (!user) {
+      console.warn(`Login failed: Invalid credentials for ${username}`);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
     
@@ -177,9 +187,11 @@ exports.login = async (req, res) => {
     global.sessions = global.sessions || {};
     global.sessions[token] = { userId: user.id, username: user.username };
     
+    console.log(`User ${username} (ID: ${user.id}) logged in successfully, token issued`);
+    
     res.json({ user, token });
   } catch (error) {
-    console.error('Error logging in:', error);
+    console.error(`Error during login for user ${req.body.username}:`, error);
     res.status(500).json({ error: 'Failed to login' });
   }
 };
@@ -210,6 +222,7 @@ exports.login = async (req, res) => {
 exports.getAllUsers = async (req, res) => {
   try {
     const users = await User.getAll();
+    console.log(`Retrieved ${users.length} users`);
     res.json(users);
   } catch (error) {
     console.error('Error getting users:', error);
@@ -248,18 +261,21 @@ exports.getProfile = async (req, res) => {
   try {
     // Note: This assumes authentication middleware has set req.user
     if (!req.user) {
+      console.warn(`Profile request rejected: No authentication`);
       return res.status(401).json({ error: 'Unauthorized' });
     }
     
     const user = await User.getByUsername(req.user.username);
     
     if (!user) {
+      console.warn(`Profile not found for authenticated user: ${req.user.username}`);
       return res.status(404).json({ error: 'User not found' });
     }
     
+    console.log(`Profile retrieved for user: ${user.username}`);
     res.json(User.excludePassword(user));
   } catch (error) {
-    console.error('Error getting profile:', error);
+    console.error(`Error getting profile for user ${req.user?.username}:`, error);
     res.status(500).json({ error: 'Failed to retrieve profile' });
   }
 };
@@ -289,6 +305,7 @@ exports.logout = async (req, res) => {
   try {
     // Note: This assumes authentication middleware has set req.user
     if (!req.user) {
+      console.warn(`Logout rejected: No authentication`);
       return res.status(401).json({ error: 'Unauthorized' });
     }
     
@@ -297,9 +314,10 @@ exports.logout = async (req, res) => {
     global.tokenBlacklist = global.tokenBlacklist || new Set();
     global.tokenBlacklist.add(token);
     
+    console.log(`User ${req.user.username} logged out, token blacklisted`);
     res.status(200).json({ message: 'Logout successful' });
   } catch (error) {
-    console.error('Error logging out:', error);
+    console.error(`Error logging out user ${req.user?.username}:`, error);
     res.status(500).json({ error: 'Failed to logout' });
   }
 };
