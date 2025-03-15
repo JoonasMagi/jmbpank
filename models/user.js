@@ -1,14 +1,57 @@
 const { query, run, get } = require('./db');
 const crypto = require('crypto');
 
-// Define error codes for better error handling
+// Define error codes with descriptions for better logging and UI display
 const ErrorCodes = {
-  USERNAME_EXISTS: 'USER_001',
-  EMAIL_EXISTS: 'USER_002',
-  CONSTRAINT_VIOLATION: 'USER_003',
-  CREATION_FAILED: 'USER_004',
-  DATABASE_ERROR: 'DB_001'
+  USERNAME_EXISTS: {
+    code: 'USER_001',
+    message: 'Username already exists',
+    description: 'The username is already taken by another user',
+    status: 400
+  },
+  EMAIL_EXISTS: {
+    code: 'USER_002',
+    message: 'Email already exists',
+    description: 'The email address is already registered',
+    status: 400
+  },
+  CONSTRAINT_VIOLATION: {
+    code: 'USER_003',
+    message: 'Username or email already exists',
+    description: 'Either the username or email is already in use',
+    status: 400
+  },
+  CREATION_FAILED: {
+    code: 'USER_004',
+    message: 'Failed to create user',
+    description: 'Could not create user due to a database error',
+    status: 500
+  },
+  DATABASE_ERROR: {
+    code: 'DB_001',
+    message: 'Database error occurred',
+    description: 'An unexpected database error occurred',
+    status: 500
+  },
+  USER_NOT_FOUND: {
+    code: 'USER_005',
+    message: 'User not found',
+    description: 'The requested user was not found in the database',
+    status: 404
+  }
 };
+
+// Helper to create standardized error objects
+function createError(errorType, additionalDetails = {}) {
+  const errorInfo = ErrorCodes[errorType];
+  const error = new Error(errorInfo.message);
+  error.code = errorInfo.code;
+  error.status = errorInfo.status;
+  error.description = errorInfo.description;
+  error.details = additionalDetails;
+  
+  return error;
+}
 
 class User {
   /**
@@ -24,11 +67,7 @@ class User {
       // First check if username already exists to avoid race condition
       const existingUser = await this.getByUsername(username);
       if (existingUser) {
-        const error = new Error('Username already exists');
-        error.code = ErrorCodes.USERNAME_EXISTS;
-        error.status = 400;
-        error.details = { field: 'username', value: username };
-        throw error;
+        throw createError('USERNAME_EXISTS', { field: 'username', value: username });
       }
       
       // Hash the password
@@ -54,46 +93,34 @@ class User {
         return this.excludePassword(user);
       }
       
-      const error = new Error('Failed to create user');
-      error.code = ErrorCodes.CREATION_FAILED;
-      error.status = 500;
-      error.details = { operation: 'database_insert' };
-      throw error;
+      throw createError('CREATION_FAILED', { operation: 'database_insert' });
     } catch (error) {
       // If error already has our custom format, just throw it
-      if (error.code && error.code.startsWith('USER_')) {
+      if (error.code && error.description) {
         throw error;
       }
       
       // Handle SQLite constraint violation (username/email unique constraint)
       if (error.code === 'SQLITE_CONSTRAINT') {
-        let constraintError;
-        
-        // Check if it's a username or email constraint
         if (error.message && error.message.includes('UNIQUE constraint failed: users.username')) {
-          constraintError = new Error('Username already exists');
-          constraintError.code = ErrorCodes.USERNAME_EXISTS;
-          constraintError.details = { field: 'username', value: username };
+          throw createError('USERNAME_EXISTS', { field: 'username', value: username });
         } else if (error.message && error.message.includes('UNIQUE constraint failed: users.email')) {
-          constraintError = new Error('Email already exists');
-          constraintError.code = ErrorCodes.EMAIL_EXISTS;
-          constraintError.details = { field: 'email', value: email };
+          throw createError('EMAIL_EXISTS', { field: 'email', value: email });
         } else {
-          constraintError = new Error('Username or email already exists');
-          constraintError.code = ErrorCodes.CONSTRAINT_VIOLATION;
-          constraintError.details = { fields: ['username', 'email'], values: [username, email] };
+          throw createError('CONSTRAINT_VIOLATION', { 
+            fields: ['username', 'email'], 
+            values: [username, email],
+            originalError: String(error.message) 
+          });
         }
-        
-        constraintError.status = 400;
-        constraintError.originalError = error.message;
-        throw constraintError;
       }
       
       // General database error
-      const dbError = new Error(error.message || 'Database error occurred');
-      dbError.code = ErrorCodes.DATABASE_ERROR;
-      dbError.status = 500;
-      dbError.originalError = error;
+      const dbError = createError('DATABASE_ERROR', { 
+        message: error.message,
+        originalError: String(error.message || error)
+      });
+      
       throw dbError;
     }
   }
@@ -108,11 +135,12 @@ class User {
       const user = await get('SELECT * FROM users WHERE username = ?', [username]);
       return user || null;
     } catch (error) {
-      const dbError = new Error('Error retrieving user');
-      dbError.code = ErrorCodes.DATABASE_ERROR;
-      dbError.status = 500;
-      dbError.originalError = error;
-      throw dbError;
+      throw createError('DATABASE_ERROR', {
+        operation: 'get_user_by_username',
+        username: username,
+        message: error.message,
+        originalError: String(error.message || error)
+      });
     }
   }
 
@@ -141,15 +169,16 @@ class User {
       return null;
     } catch (error) {
       // Pass through our custom errors
-      if (error.code) {
+      if (error.code && error.description) {
         throw error;
       }
       
-      const dbError = new Error('Error validating credentials');
-      dbError.code = ErrorCodes.DATABASE_ERROR;
-      dbError.status = 500;
-      dbError.originalError = error;
-      throw dbError;
+      throw createError('DATABASE_ERROR', {
+        operation: 'validate_credentials',
+        username: username,
+        message: error.message,
+        originalError: String(error.message || error)
+      });
     }
   }
 
@@ -162,11 +191,11 @@ class User {
       const users = await query('SELECT * FROM users');
       return users.map(user => this.excludePassword(user));
     } catch (error) {
-      const dbError = new Error('Error retrieving users');
-      dbError.code = ErrorCodes.DATABASE_ERROR;
-      dbError.status = 500;
-      dbError.originalError = error;
-      throw dbError;
+      throw createError('DATABASE_ERROR', {
+        operation: 'get_all_users',
+        message: error.message,
+        originalError: String(error.message || error)
+      });
     }
   }
 
@@ -183,7 +212,8 @@ class User {
   }
 }
 
-// Export error codes for use in controllers
+// Export error codes and helper for use in controllers
 User.ErrorCodes = ErrorCodes;
+User.createError = createError;
 
 module.exports = User;

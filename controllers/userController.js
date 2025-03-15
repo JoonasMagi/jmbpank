@@ -79,7 +79,7 @@ const jwt = require('jsonwebtoken');
  */
 exports.register = async (req, res) => {
   try {
-    console.log('Registration request received:', req.body);
+    console.log(`Registration request received: ${JSON.stringify(req.body, null, 2)}`);
     
     const { username, password, fullName, email } = req.body;
     
@@ -99,7 +99,7 @@ exports.register = async (req, res) => {
         }
       };
       
-      console.warn(`Registration failed [VALIDATION_001]: Missing required fields - ${JSON.stringify(errorResponse.details)}`);
+      console.warn(`Registration failed [${errorResponse.code}] Status: ${errorResponse.status} - Missing required fields: ${JSON.stringify(errorResponse.details.missingFields)}`);
       return res.status(400).json(errorResponse);
     }
     
@@ -118,7 +118,7 @@ exports.register = async (req, res) => {
         }
       };
       
-      console.warn(`Registration failed [VALIDATION_002]: Password too short - length: ${password.length}, required: 8`);
+      console.warn(`Registration failed [${errorResponse.code}] Status: ${errorResponse.status} - Password too short - length: ${password.length}, required: 8`);
       return res.status(400).json(errorResponse);
     }
     
@@ -130,12 +130,16 @@ exports.register = async (req, res) => {
       
       return res.status(201).json(user);
     } catch (dbError) {
-      console.error('Database error during user creation:', {
+      // Convert error details to a safe loggable JSON string
+      const errorDetails = {
         message: dbError.message,
         code: dbError.code,
-        details: dbError.details,
-        originalError: dbError.originalError
-      });
+        status: dbError.status || 400,
+        details: dbError.details || {},
+        originalError: dbError.originalError ? String(dbError.originalError) : null
+      };
+      
+      console.error(`Database error during user creation: ${JSON.stringify(errorDetails, null, 2)}`);
       
       // Use the error status from the model or default to 400
       const status = dbError.status || 400;
@@ -150,15 +154,15 @@ exports.register = async (req, res) => {
       
       // Log specific error types with their codes
       if (dbError.code === User.ErrorCodes.USERNAME_EXISTS) {
-        console.warn(`Registration failed [${dbError.code}]: Username already exists - ${username}`);
+        console.warn(`Registration failed [${dbError.code}] Status: ${status} - Username already exists: ${username}`);
       } else if (dbError.code === User.ErrorCodes.EMAIL_EXISTS) {
-        console.warn(`Registration failed [${dbError.code}]: Email already exists - ${email}`);
+        console.warn(`Registration failed [${dbError.code}] Status: ${status} - Email already exists: ${email}`);
       } else if (dbError.code === User.ErrorCodes.CONSTRAINT_VIOLATION) {
-        console.warn(`Registration failed [${dbError.code}]: Constraint violation - ${JSON.stringify(dbError.details)}`);
+        console.warn(`Registration failed [${dbError.code}] Status: ${status} - Constraint violation: ${JSON.stringify(dbError.details)}`);
       } else if (dbError.code === User.ErrorCodes.DATABASE_ERROR) {
-        console.error(`Registration failed [${dbError.code}]: Database error - ${dbError.message}`);
+        console.error(`Registration failed [${dbError.code}] Status: ${status} - Database error: ${dbError.message}`);
       } else {
-        console.error(`Registration failed [${dbError.code || 'UNKNOWN'}]: ${dbError.message}`);
+        console.error(`Registration failed [${dbError.code || 'UNKNOWN'}] Status: ${status} - ${dbError.message}`);
       }
       
       return res.status(status).json(errorResponse);
@@ -173,10 +177,8 @@ exports.register = async (req, res) => {
       details: { message: error.message }
     };
     
-    console.error('Unexpected error in register controller:', {
-      message: error.message,
+    console.error(`Unexpected error in register controller [${errorResponse.code}] Status: ${errorResponse.status} - ${error.message}`, {
       stack: error.stack,
-      code: errorResponse.code
     });
     
     return res.status(500).json(errorResponse);
@@ -248,7 +250,7 @@ exports.login = async (req, res) => {
         }
       };
       
-      console.warn(`Login failed [AUTH_001]: Missing credentials for ${username || 'unknown user'} - ${JSON.stringify(errorResponse.details)}`);
+      console.warn(`Login failed [${errorResponse.code}] Status: ${errorResponse.status} - Missing credentials: ${JSON.stringify(errorResponse.details.missingFields)}`);
       return res.status(400).json(errorResponse);
     }
     
@@ -263,7 +265,7 @@ exports.login = async (req, res) => {
         timestamp: new Date().toISOString()
       };
       
-      console.warn(`Login failed [AUTH_002]: Invalid credentials for ${username}`);
+      console.warn(`Login failed [${errorResponse.code}] Status: ${errorResponse.status} - Invalid credentials for ${username}`);
       return res.status(401).json(errorResponse);
     }
     
@@ -292,7 +294,7 @@ exports.login = async (req, res) => {
         details: error.details || {}
       };
       
-      console.error(`Login failed [${error.code}]: Database error during login for ${req.body.username} - ${error.message}`);
+      console.error(`Login failed [${error.code}] Status: ${errorResponse.status} - Database error during login for ${req.body.username} - ${error.message}`);
       return res.status(errorResponse.status).json(errorResponse);
     }
     
@@ -304,8 +306,7 @@ exports.login = async (req, res) => {
       timestamp: new Date().toISOString()
     };
     
-    console.error(`Login failed [SERVER_002]: Unexpected error for user ${req.body.username}:`, {
-      message: error.message,
+    console.error(`Login failed [${errorResponse.code}] Status: ${errorResponse.status} - Unexpected error for user ${req.body.username}: ${error.message}`, {
       stack: error.stack
     });
     
@@ -349,9 +350,8 @@ exports.getAllUsers = async (req, res) => {
       timestamp: new Date().toISOString()
     };
     
-    console.error(`Error getting users [${errorResponse.code}]:`, {
-      message: error.message,
-      details: error.details,
+    console.error(`Error getting users [${errorResponse.code}] Status: ${errorResponse.status} - ${error.message}`, {
+      details: error.details ? JSON.stringify(error.details) : null,
       stack: error.stack
     });
     
@@ -397,7 +397,7 @@ exports.getProfile = async (req, res) => {
         timestamp: new Date().toISOString()
       };
       
-      console.warn(`Profile request rejected [AUTH_003]: No authentication`);
+      console.warn(`Profile request rejected [${errorResponse.code}] Status: ${errorResponse.status} - No authentication`);
       return res.status(401).json(errorResponse);
     }
     
@@ -412,7 +412,7 @@ exports.getProfile = async (req, res) => {
         details: { username: req.user.username }
       };
       
-      console.warn(`Profile not found [USER_NOT_FOUND] for authenticated user: ${req.user.username}`);
+      console.warn(`Profile not found [${errorResponse.code}] Status: ${errorResponse.status} - User not found: ${req.user.username}`);
       return res.status(404).json(errorResponse);
     }
     
@@ -426,9 +426,8 @@ exports.getProfile = async (req, res) => {
       timestamp: new Date().toISOString()
     };
     
-    console.error(`Error getting profile [${errorResponse.code}] for user ${req.user?.username}:`, {
-      message: error.message,
-      details: error.details,
+    console.error(`Error getting profile [${errorResponse.code}] Status: ${errorResponse.status} - ${error.message} - User: ${req.user?.username}`, {
+      details: error.details ? JSON.stringify(error.details) : null,
       stack: error.stack
     });
     
@@ -468,7 +467,7 @@ exports.logout = async (req, res) => {
         timestamp: new Date().toISOString()
       };
       
-      console.warn(`Logout rejected [AUTH_004]: No authentication`);
+      console.warn(`Logout rejected [${errorResponse.code}] Status: ${errorResponse.status} - No authentication`);
       return res.status(401).json(errorResponse);
     }
     
@@ -491,8 +490,7 @@ exports.logout = async (req, res) => {
       timestamp: new Date().toISOString()
     };
     
-    console.error(`Error logging out user [SERVER_005] ${req.user?.username}:`, {
-      message: error.message,
+    console.error(`Error logging out user [${errorResponse.code}] Status: ${errorResponse.status} - ${error.message} - User: ${req.user?.username}`, {
       stack: error.stack
     });
     
