@@ -138,6 +138,32 @@ class CryptoService {
   }
 
   /**
+   * Convert JWK to PEM format
+   * @param {Object} jwk - JSON Web Key
+   * @returns {string} PEM format public key
+   */
+  static jwkToPem(jwk) {
+    try {
+      // Decode base64 values to binary
+      const nBytes = Buffer.from(jwk.n, 'base64');
+      const eBytes = Buffer.from(jwk.e, 'base64');
+      
+      // Convert bytes to BigIntegers
+      const nBigInt = new forge.jsbn.BigInteger(nBytes.toString('hex'), 16);
+      const eBigInt = new forge.jsbn.BigInteger(eBytes.toString('hex'), 16);
+      
+      // Create RSA public key with modulus (n) and exponent (e)
+      const publicKey = forge.pki.rsa.setPublicKey(nBigInt, eBigInt);
+      
+      // Convert to PEM format
+      return forge.pki.publicKeyToPem(publicKey);
+    } catch (error) {
+      console.error('Error converting JWK to PEM:', error);
+      throw new Error('Failed to convert JWK to PEM');
+    }
+  }
+
+  /**
    * Get JWKS (JSON Web Key Set) for public key distribution
    * @returns {Promise<Object>} JWKS object
    */
@@ -162,8 +188,14 @@ class CryptoService {
         keys: keys.map(key => {
           // Convert PEM to JWK format
           const forge_key = forge.pki.publicKeyFromPem(key.public_key);
-          const n = forge.util.encode64(forge_key.n.toString(16));
-          const e = forge.util.encode64(forge_key.e.toString(16));
+          const n = Buffer.from(forge_key.n.toString(16), 'hex').toString('base64')
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_')
+            .replace(/=/g, '');
+          const e = Buffer.from(forge_key.e.toString(16), 'hex').toString('base64')
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_')
+            .replace(/=/g, '');
           
           return {
             kty: 'RSA',
@@ -182,8 +214,14 @@ class CryptoService {
       // Return a minimal JWKS with a temporary key
       const { keyId, publicKey } = await this.getActiveKeyPair();
       const forge_key = forge.pki.publicKeyFromPem(publicKey);
-      const n = forge.util.encode64(forge_key.n.toString(16));
-      const e = forge.util.encode64(forge_key.e.toString(16));
+      const n = Buffer.from(forge_key.n.toString(16), 'hex').toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=/g, '');
+      const e = Buffer.from(forge_key.e.toString(16), 'hex').toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=/g, '');
       
       return {
         keys: [{
