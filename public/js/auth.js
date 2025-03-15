@@ -26,30 +26,51 @@ const Auth = (() => {
     // Register new user
     const register = async (username, password, fullName, email) => {
         try {
+            console.log('Attempting to register user:', username);
+            
+            // Create the request data
+            const userData = {
+                username,
+                password,
+                fullName,
+                email
+            };
+            
+            console.log('Registration data:', userData);
+            
+            // Send the request
             const response = await fetch('/api/users/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    username,
-                    password,
-                    fullName,
-                    email
-                })
+                body: JSON.stringify(userData)
             });
             
+            // Check if we got a valid JSON response
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                // If not JSON, get the text response and log it
+                const textResponse = await response.text();
+                console.error('Received non-JSON response:', textResponse);
+                throw new Error('Server returned a non-JSON response. Please try again later.');
+            }
+            
+            // Parse the JSON response
             const data = await response.json();
             
             if (!response.ok) {
                 throw new Error(data.error || 'Registration failed');
             }
             
+            console.log('Registration successful:', data);
+            
             return {
                 success: true,
                 user: data
             };
         } catch (error) {
+            console.error('Registration error:', error);
             return {
                 success: false,
                 error: error.message
@@ -71,6 +92,15 @@ const Auth = (() => {
                 })
             });
             
+            // Check if we got a valid JSON response
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                // If not JSON, get the text response and log it
+                const textResponse = await response.text();
+                console.error('Received non-JSON response:', textResponse);
+                throw new Error('Server returned a non-JSON response. Please try again later.');
+            }
+            
             const data = await response.json();
             
             if (!response.ok) {
@@ -89,6 +119,7 @@ const Auth = (() => {
                 user: data.user
             };
         } catch (error) {
+            console.error('Login error:', error);
             return {
                 success: false,
                 error: error.message
@@ -230,6 +261,20 @@ document.addEventListener('DOMContentLoaded', function() {
             errorElement.textContent = 'Password must be at least 8 characters long';
             return;
         }
+        
+        // Additional validation
+        if (!username || !fullName || !email) {
+            errorElement.textContent = 'All fields are required';
+            return;
+        }
+        
+        // Email validation
+        if (!email.includes('@') || !email.includes('.')) {
+            errorElement.textContent = 'Please enter a valid email address';
+            return;
+        }
+        
+        console.log('Form validation passed, attempting to register...');
         
         const result = await Auth.register(username, password, fullName, email);
         
