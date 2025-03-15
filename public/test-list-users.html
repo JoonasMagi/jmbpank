@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test List Users</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .users-list {
+            margin-top: 20px;
+        }
+        .user-item {
+            border-bottom: 1px solid #eee;
+            padding: 10px 0;
+        }
+        .no-users {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+        }
+        .actions {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .danger {
+            background-color: #f44336;
+        }
+        .danger:hover {
+            background-color: #d32f2f;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Test List All Users</h1>
+        <div class="users-list" id="users-list">
+            <div class="no-users">Loading users...</div>
+        </div>
+        
+        <div class="actions">
+            <button id="refresh-btn">Refresh Users</button>
+            <button id="reset-db-btn" class="danger">Reset Database</button>
+        </div>
+        
+        <div class="error" id="error-message"></div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const usersList = document.getElementById('users-list');
+            const refreshBtn = document.getElementById('refresh-btn');
+            const resetDbBtn = document.getElementById('reset-db-btn');
+            const errorMessage = document.getElementById('error-message');
+            
+            // Load users
+            async function loadUsers() {
+                usersList.innerHTML = '<div class="no-users">Loading users...</div>';
+                errorMessage.textContent = '';
+                
+                try {
+                    const response = await fetch('/api/users');
+                    const users = await response.json();
+                    
+                    if (users.length === 0) {
+                        usersList.innerHTML = '<div class="no-users">No users found in the database.</div>';
+                        return;
+                    }
+                    
+                    let html = '';
+                    users.forEach(user => {
+                        html += `
+                            <div class="user-item">
+                                <strong>Username:</strong> ${user.username} | 
+                                <strong>Full Name:</strong> ${user.full_name} | 
+                                <strong>Email:</strong> ${user.email} |
+                                <strong>ID:</strong> ${user.id} |
+                                <strong>Created:</strong> ${new Date(user.created_at).toLocaleString()}
+                            </div>
+                        `;
+                    });
+                    
+                    usersList.innerHTML = html;
+                } catch (error) {
+                    console.error('Error loading users:', error);
+                    errorMessage.textContent = `Error: ${error.message}`;
+                    usersList.innerHTML = '<div class="no-users">Failed to load users.</div>';
+                }
+            }
+            
+            // Reset database
+            async function resetDatabase() {
+                if (!confirm('Are you sure you want to reset the database? This will delete all users, accounts, and transactions.')) {
+                    return;
+                }
+                
+                try {
+                    // This is a test endpoint that we'll add later
+                    const response = await fetch('/api/test/reset-db', { method: 'POST' });
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        alert('Database reset successfully!');
+                        loadUsers();
+                    } else {
+                        throw new Error(result.error || 'Unknown error');
+                    }
+                } catch (error) {
+                    console.error('Error resetting database:', error);
+                    errorMessage.textContent = `Error resetting database: ${error.message}`;
+                    alert('Failed to reset database. See console for details.');
+                }
+            }
+            
+            // Event listeners
+            refreshBtn.addEventListener('click', loadUsers);
+            resetDbBtn.addEventListener('click', resetDatabase);
+            
+            // Initial load
+            loadUsers();
+        });
+    </script>
+</body>
+</html>
