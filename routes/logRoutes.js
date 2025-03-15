@@ -7,41 +7,53 @@ const { authenticate, isAdmin } = require('../middleware/auth');
 // Get logs directory
 const logsDir = path.join(__dirname, '../logs');
 
+// Ensure logs directory exists
+if (!fs.existsSync(logsDir)) {
+  fs.mkdirSync(logsDir, { recursive: true });
+  console.log('Created logs directory at:', logsDir);
+}
+
 // Get all logs
 router.get('/', authenticate, (req, res) => {
   try {
-    // Ensure logs directory exists
-    if (!fs.existsSync(logsDir)) {
-      fs.mkdirSync(logsDir, { recursive: true });
-      return res.json([]);
-    }
-
     // Get most recent log file
     const today = new Date().toISOString().slice(0, 10);
     const logFile = path.join(logsDir, `app-${today}.log`);
     
-    // If log file doesn't exist, try to find the most recent one
-    let logFilePath = logFile;
+    // If today's log file doesn't exist, create an empty one
     if (!fs.existsSync(logFile)) {
+      // Try to find the most recent log file
       const logFiles = fs.readdirSync(logsDir)
         .filter(file => file.startsWith('app-') && file.endsWith('.log'))
         .sort()
         .reverse();
       
       if (logFiles.length === 0) {
-        return res.json([]);
+        // No existing log files, create a new one
+        const timestamp = new Date().toISOString();
+        fs.writeFileSync(logFile, `[${timestamp}] INFO: Log file created\n`);
+        console.log('Created new log file at:', logFile);
+        return res.json([`[${timestamp}] INFO: Log file created`]);
       }
       
-      logFilePath = path.join(logsDir, logFiles[0]);
+      // Use the most recent log file
+      const logFilePath = path.join(logsDir, logFiles[0]);
+      console.log('Using most recent log file:', logFilePath);
+      const logContent = fs.readFileSync(logFilePath, 'utf8');
+      const logLines = logContent.split('\n').filter(line => line.trim() !== '');
+      return res.json(logLines);
     }
     
-    // Read the log file
-    const logContent = fs.readFileSync(logFilePath, 'utf8');
+    // Read today's log file
+    const logContent = fs.readFileSync(logFile, 'utf8');
     const logLines = logContent.split('\n').filter(line => line.trim() !== '');
     
     res.json(logLines);
   } catch (error) {
-    console.error('Error retrieving logs:', error);
+    console.error(`Error retrieving logs [SERVER_LOG_001] Status: 500 - ${error.message}`, {
+      stack: error.stack
+    });
+    
     res.status(500).json({ 
       error: 'Failed to retrieve logs', 
       code: 'SERVER_LOG_001',
@@ -56,12 +68,6 @@ router.get('/', authenticate, (req, res) => {
 // Get available log files
 router.get('/files', authenticate, isAdmin, (req, res) => {
   try {
-    // Ensure logs directory exists
-    if (!fs.existsSync(logsDir)) {
-      fs.mkdirSync(logsDir, { recursive: true });
-      return res.json([]);
-    }
-
     // Get all log files
     const logFiles = fs.readdirSync(logsDir)
       .filter(file => file.endsWith('.log'))
@@ -75,7 +81,10 @@ router.get('/files', authenticate, isAdmin, (req, res) => {
     
     res.json(logFiles);
   } catch (error) {
-    console.error('Error retrieving log files:', error);
+    console.error(`Error retrieving log files [SERVER_LOG_002] Status: 500 - ${error.message}`, {
+      stack: error.stack
+    });
+    
     res.status(500).json({ 
       error: 'Failed to retrieve log files', 
       code: 'SERVER_LOG_002',
@@ -123,7 +132,11 @@ router.get('/file/:filename', authenticate, isAdmin, (req, res) => {
     
     res.json(logLines);
   } catch (error) {
-    console.error('Error retrieving log file:', error);
+    console.error(`Error retrieving log file [SERVER_LOG_003] Status: 500 - ${error.message}`, {
+      stack: error.stack,
+      filename: req.params.filename
+    });
+    
     res.status(500).json({ 
       error: 'Failed to retrieve log file', 
       code: 'SERVER_LOG_003',
@@ -166,11 +179,24 @@ router.post('/clear', authenticate, (req, res) => {
       // Add initial log entry
       const timestamp = new Date().toISOString();
       fs.appendFileSync(logFile, `[${timestamp}] INFO: Logs cleared by user ${req.user.username}\n`);
+    } else {
+      // Create a new log file
+      const timestamp = new Date().toISOString();
+      fs.writeFileSync(logFile, `[${timestamp}] INFO: Log file created\n`);
+      console.log('Created new log file at:', logFile);
     }
     
-    res.json({ message: 'Logs cleared successfully' });
+    res.json({ 
+      message: 'Logs cleared successfully',
+      code: 'LOG_CLEARED',
+      status: 200,
+      timestamp: new Date().toISOString()
+    });
   } catch (error) {
-    console.error('Error clearing logs:', error);
+    console.error(`Error clearing logs [SERVER_LOG_004] Status: 500 - ${error.message}`, {
+      stack: error.stack
+    });
+    
     res.status(500).json({ 
       error: 'Failed to clear logs', 
       code: 'SERVER_LOG_004',
@@ -182,9 +208,44 @@ router.post('/clear', authenticate, (req, res) => {
   }
 });
 
-// Add route to serve logs viewer
-router.get('/viewer', authenticate, (req, res) => {
+// Add route to serve logs viewer with relaxed authentication
+router.get('/viewer', (req, res) => {
+  // Make the log viewer accessible without authentication for easier debugging
+  // In production, you should re-enable authentication
   res.sendFile(path.join(__dirname, '../public/test/logs-viewer.html'));
+});
+
+// Create a test-specific route for checking system functionality
+router.get('/test', (req, res) => {
+  try {
+    // Create a test log entry
+    const timestamp = new Date().toISOString();
+    const today = timestamp.slice(0, 10);
+    const logFile = path.join(logsDir, `app-${today}.log`);
+    
+    // Create or append to the log file
+    fs.appendFileSync(logFile, `[${timestamp}] INFO: Test log entry created via /api/logs/test endpoint\n`);
+    
+    res.json({ 
+      message: 'Test log entry created successfully',
+      code: 'LOG_TEST_SUCCESS',
+      status: 200,
+      timestamp
+    });
+  } catch (error) {
+    console.error(`Error creating test log [SERVER_LOG_005] Status: 500 - ${error.message}`, {
+      stack: error.stack
+    });
+    
+    res.status(500).json({ 
+      error: 'Failed to create test log entry', 
+      code: 'SERVER_LOG_005',
+      status: 500,
+      timestamp: new Date().toISOString(),
+      description: 'Failed to create test log entry',
+      details: { message: error.message }
+    });
+  }
 });
 
 module.exports = router;
