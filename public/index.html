@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JMB Pank</title>
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/logs.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
@@ -15,7 +16,12 @@
             </div>
             <div id="user-info" class="hidden">
                 <span id="username-display"></span>
-                <button id="logout-btn">Log out</button>
+                <button id="logs-btn" class="btn secondary" title="View Logs">
+                    <i class="fas fa-list-alt"></i> Logs
+                </button>
+                <button id="logout-btn" class="btn secondary">
+                    <i class="fas fa-sign-out-alt"></i> Log out
+                </button>
             </div>
         </header>
 
@@ -160,6 +166,21 @@
             </div>
         </main>
 
+        <!-- Logs Panel -->
+        <div id="logs-panel" class="hidden">
+            <div class="logs-header">
+                <h2>Application Logs</h2>
+                <button id="close-logs-btn">&times;</button>
+            </div>
+            <div id="log-files">
+                <!-- Log file selector will be added here dynamically -->
+            </div>
+            <div id="logs-container">
+                <!-- Log content will be added here dynamically -->
+                <div class="loading">Loading logs...</div>
+            </div>
+        </div>
+
         <footer>
             <p>&copy; 2025 JMB Pank. All rights reserved.</p>
         </footer>
@@ -168,6 +189,7 @@
     <script src="js/auth.js"></script>
     <script src="js/accounts.js"></script>
     <script src="js/transactions.js"></script>
+    <script src="js/logs.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>
