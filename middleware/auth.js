@@ -18,8 +18,18 @@ exports.authenticate = async (req, res, next) => {
     
     const token = authHeader.split(' ')[1];
     
+    // Check if token is blacklisted
+    if (global.tokenBlacklist && global.tokenBlacklist.has(token)) {
+      return res.status(401).json({ error: 'Token is blacklisted' });
+    }
+    
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    
+    // Check if session exists
+    if (!global.sessions || !global.sessions[token]) {
+      return res.status(401).json({ error: 'Invalid session' });
+    }
     
     // Get user
     const user = await User.getByUsername(decoded.username);

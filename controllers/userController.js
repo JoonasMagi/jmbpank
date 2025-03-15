@@ -106,16 +106,16 @@ exports.register = async (req, res) => {
 };
 
 /**
- * Login user
+ * Login user and create session
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  */
 /**
  * @swagger
- * /users/login:
+ * /sessions:
  *   post:
- *     summary: Login user
- *     tags: [Users]
+ *     summary: Login user and create session
+ *     tags: [Sessions]
  *     requestBody:
  *       required: true
  *       content:
@@ -172,6 +172,10 @@ exports.login = async (req, res) => {
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '24h' }
     );
+    
+    // Create session
+    global.sessions = global.sessions || {};
+    global.sessions[token] = { userId: user.id, username: user.username };
     
     res.json({ user, token });
   } catch (error) {
@@ -267,10 +271,10 @@ exports.getProfile = async (req, res) => {
  */
 /**
  * @swagger
- * /users/logout:
- *   post:
+ * /sessions:
+ *   delete:
  *     summary: Logout user
- *     tags: [Users]
+ *     tags: [Sessions]
  *     security:
  *       - bearerAuth: []
  *     responses:
