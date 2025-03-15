@@ -65,6 +65,47 @@ exports.getAllAccounts = async (req, res) => {
 };
 
 /**
+ * Get accounts for authenticated user
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+/**
+ * @swagger
+ * /accounts/user:
+ *   get:
+ *     summary: Get all accounts for the authenticated user
+ *     tags: [Accounts]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of user's accounts
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Account'
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+exports.getUserAccounts = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    const accounts = await Account.getByUserId(req.user.id);
+    res.json(accounts);
+  } catch (error) {
+    console.error('Error getting user accounts:', error);
+    res.status(500).json({ error: 'Failed to retrieve user accounts' });
+  }
+};
+
+/**
  * Get account by account number
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
@@ -102,11 +143,6 @@ exports.getAccount = async (req, res) => {
       return res.status(404).json({ error: 'Account not found' });
     }
     
-    // Ensure the account belongs to the authenticated user
-    if (account.user_id !== req.user.id) {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
-    
     res.json(account);
   } catch (error) {
     console.error('Error getting account:', error);
@@ -125,24 +161,24 @@ exports.getAccount = async (req, res) => {
  *   post:
  *     summary: Create a new account
  *     tags: [Accounts]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - ownerName
  *             properties:
- *               ownerName:
+ *               accountType:
  *                 type: string
- *                 description: The owner's name
+ *                 enum: [checking, savings]
+ *                 default: checking
+ *                 description: Type of account
  *               currency:
  *                 type: string
- *                 description: Account currency (default EUR)
- *               initialBalance:
- *                 type: number
- *                 description: Initial account balance (default 0)
+ *                 default: EUR
+ *                 description: Account currency
  *     responses:
  *       201:
  *         description: Account created successfully
@@ -152,18 +188,37 @@ exports.getAccount = async (req, res) => {
  *               $ref: '#/components/schemas/Account'
  *       400:
  *         description: Invalid input
+ *       401:
+ *         description: Unauthorized
  *       500:
  *         description: Server error
  */
 exports.createAccount = async (req, res) => {
   try {
-    const { ownerName, currency = 'EUR', initialBalance = 0 } = req.body;
-    
-    if (!ownerName) {
-      return res.status(400).json({ error: 'Owner name is required' });
+    if (!req.user) {
+      return res.status(401).json({ error: 'Unauthorized' });
     }
     
-    const account = await Account.create(ownerName, currency, initialBalance);
+    const { accountType = 'checking', currency = 'EUR' } = req.body;
+    
+    // Validate account type
+    if (!['checking', 'savings'].includes(accountType)) {
+      return res.status(400).json({ error: 'Invalid account type' });
+    }
+    
+    // Validate currency
+    if (!['EUR', 'USD'].includes(currency)) {
+      return res.status(400).json({ error: 'Invalid currency' });
+    }
+    
+    const account = await Account.create({
+      userId: req.user.id,
+      ownerName: req.user.username,
+      accountType,
+      currency,
+      initialBalance: 1000 // Give new users some money to work with
+    });
+    
     res.status(201).json(account);
   } catch (error) {
     console.error('Error creating account:', error);
