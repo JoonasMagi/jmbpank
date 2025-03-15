@@ -14,7 +14,7 @@ const path = require('path');
  *         name: lines
  *         schema:
  *           type: integer
- *         description: Number of log lines to retrieve (default: 100)
+ *           description: Number of log lines to retrieve (default 100)
  *     responses:
  *       200:
  *         description: Log entries
@@ -85,7 +85,7 @@ exports.getLogs = async (req, res) => {
  *         name: lines
  *         schema:
  *           type: integer
- *         description: Number of log lines to retrieve (default: 100)
+ *           description: Number of log lines to retrieve (default 100)
  *     responses:
  *       200:
  *         description: Log entries
