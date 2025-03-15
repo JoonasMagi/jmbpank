@@ -47,6 +47,7 @@ const Auth = (() => {
                 body: JSON.stringify(userData)
             });
             
+            let data;
             // Check if we got a valid JSON response
             const contentType = response.headers.get('content-type');
             if (!contentType || !contentType.includes('application/json')) {
@@ -54,21 +55,24 @@ const Auth = (() => {
                 const textResponse = await response.text();
                 console.error('Received non-JSON response:', textResponse);
                 throw new Error('Server returned a non-JSON response. Please try again later.');
+            } else {
+                // Parse the JSON response
+                data = await response.json();
+                console.log('Registration response:', data);
             }
             
-            // Parse the JSON response
-            const data = await response.json();
-            
-            if (!response.ok) {
-                throw new Error(data.error || 'Registration failed');
+            // If status is in 2xx range, consider it a success even if there are minor issues
+            if (response.status >= 200 && response.status < 300) {
+                console.log('Registration successful with status:', response.status);
+                return {
+                    success: true,
+                    user: data
+                };
             }
             
-            console.log('Registration successful:', data);
+            // Otherwise, handle as error
+            throw new Error(data.error || 'Registration failed');
             
-            return {
-                success: true,
-                user: data
-            };
         } catch (error) {
             console.error('Registration error:', error);
             return {
@@ -276,7 +280,17 @@ document.addEventListener('DOMContentLoaded', function() {
         
         console.log('Form validation passed, attempting to register...');
         
+        // Disable the submit button and show loading state
+        const submitButton = this.querySelector('button[type="submit"]');
+        const originalButtonText = submitButton.textContent;
+        submitButton.disabled = true;
+        submitButton.textContent = 'Creating account...';
+        
         const result = await Auth.register(username, password, fullName, email);
+        
+        // Re-enable the button
+        submitButton.disabled = false;
+        submitButton.textContent = originalButtonText;
         
         if (result.success) {
             successElement.textContent = 'Registration successful! You can now login.';
