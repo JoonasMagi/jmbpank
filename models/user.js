@@ -12,6 +12,12 @@ class User {
    */
   static async create(username, password, fullName, email) {
     try {
+      // First check if username already exists to avoid race condition
+      const existingUser = await this.getByUsername(username);
+      if (existingUser) {
+        throw new Error('Username already exists');
+      }
+      
       // Hash the password
       const salt = crypto.randomBytes(16).toString('hex');
       const passwordHash = crypto
