@@ -22,66 +22,79 @@ if (!fs.existsSync(logsDir)) {
 const logFile = path.join(logsDir, `app-${new Date().toISOString().slice(0, 10)}.log`);
 const logStream = fs.createWriteStream(logFile, { flags: 'a' });
 
+// Save original console methods
+const originalConsoleLog = console.log;
+const originalConsoleError = console.error;
+const originalConsoleWarn = console.warn;
+const originalConsoleDebug = console.debug;
+
 // Create a logger function
 const logger = {
   log: (message) => {
     const timestamp = new Date().toISOString();
     const logMessage = `[${timestamp}] INFO: ${message}`;
-    console.log(logMessage);
+    originalConsoleLog(logMessage);
     logStream.write(`${logMessage}\n`);
   },
   error: (message, error) => {
     const timestamp = new Date().toISOString();
     const logMessage = `[${timestamp}] ERROR: ${message}${error ? ` - ${error.message}` : ''}`;
     const stackTrace = error ? `\n${error.stack}\n` : '';
-    console.error(logMessage);
+    originalConsoleError(logMessage);
     logStream.write(`${logMessage}${stackTrace}\n`);
   },
   warn: (message) => {
     const timestamp = new Date().toISOString();
     const logMessage = `[${timestamp}] WARN: ${message}`;
-    console.warn(logMessage);
+    originalConsoleWarn(logMessage);
     logStream.write(`${logMessage}\n`);
   },
   debug: (message) => {
     const timestamp = new Date().toISOString();
     const logMessage = `[${timestamp}] DEBUG: ${message}`;
-    console.debug(logMessage);
+    originalConsoleDebug(logMessage);
     logStream.write(`${logMessage}\n`);
   }
 };
 
 // Override console methods to log to file
-const originalConsoleLog = console.log;
-const originalConsoleError = console.error;
-const originalConsoleWarn = console.warn;
-const originalConsoleDebug = console.debug;
-
 console.log = function() {
-  const message = Array.from(arguments).join(' ');
+  const args = Array.from(arguments);
+  const message = args.join(' ');
   logger.log(message);
 };
 
 console.error = function() {
-  const message = Array.from(arguments).join(' ');
+  const args = Array.from(arguments);
+  const message = args.join(' ');
   logger.error(message);
 };
 
 console.warn = function() {
-  const message = Array.from(arguments).join(' ');
+  const args = Array.from(arguments);
+  const message = args.join(' ');
   logger.warn(message);
 };
 
 console.debug = function() {
-  const message = Array.from(arguments).join(' ');
+  const args = Array.from(arguments);
+  const message = args.join(' ');
   logger.debug(message);
 };
+
+// Direct log function for internal use (doesn't call console methods)
+function directLog(message) {
+  const timestamp = new Date().toISOString();
+  const logMessage = `[${timestamp}] INFO: ${message}`;
+  originalConsoleLog(logMessage);
+  logStream.write(`${logMessage}\n`);
+}
 
 // Initialize database first
 const db = require('./models/db');
 
 // Log database initialization
-logger.log('Database initialization started');
+directLog('Database initialization started');
 
 // Initialize Express app
 const app = express();
@@ -96,14 +109,24 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Log initial application startup
-logger.log('JMB Pank application starting up');
+directLog('JMB Pank application starting up');
 
 // Initialize crypto service (generate keys on startup) after the database is set up
 setTimeout(() => {
-  const CryptoService = require('./services/cryptoService');
-  CryptoService.createAndStoreKeyPair('1').catch(err => {
-    logger.error('Failed to initialize crypto keys:', err);
-  });
+  try {
+    const CryptoService = require('./services/cryptoService');
+    CryptoService.createAndStoreKeyPair('1').catch(err => {
+      const timestamp = new Date().toISOString();
+      const logMessage = `[${timestamp}] ERROR: Failed to initialize crypto keys: ${err.message}`;
+      originalConsoleError(logMessage);
+      logStream.write(`${logMessage}\n${err.stack}\n`);
+    });
+  } catch (err) {
+    const timestamp = new Date().toISOString();
+    const logMessage = `[${timestamp}] ERROR: Error loading CryptoService: ${err.message}`;
+    originalConsoleError(logMessage);
+    logStream.write(`${logMessage}\n${err.stack}\n`);
+  }
 }, 1000); // Delay crypto initialization to ensure DB tables are created
 
 // Routes
@@ -167,19 +190,24 @@ app.use((req, res, next) => {
   const timestamp = new Date().toISOString();
   const message = `[${timestamp}] REQUEST: ${req.method} ${req.url} - User: ${req.user ? req.user.username : 'anonymous'}`;
   
-  // Write to log file
+  // Write to log file - directly to avoid infinite recursion
   logStream.write(`${message}\n`);
+  originalConsoleLog(message);
   
   // Log request body for non-GET requests (except for sensitive endpoints)
   if (req.method !== 'GET' && !req.url.includes('/login') && !req.url.includes('/register')) {
-    logStream.write(`[${timestamp}] REQUEST BODY: ${JSON.stringify(req.body)}\n`);
+    const bodyLog = `[${timestamp}] REQUEST BODY: ${JSON.stringify(req.body)}`;
+    logStream.write(`${bodyLog}\n`);
+    originalConsoleLog(bodyLog);
   }
   
   // Capture the response
   const originalSend = res.send;
   res.send = function(body) {
     // Log response status
-    logStream.write(`[${timestamp}] RESPONSE: ${req.method} ${req.url} - Status: ${res.statusCode}\n`);
+    const responseLog = `[${timestamp}] RESPONSE: ${req.method} ${req.url} - Status: ${res.statusCode}`;
+    logStream.write(`${responseLog}\n`);
+    originalConsoleLog(responseLog);
     
     // For error responses, log more details
     if (res.statusCode >= 400) {
@@ -192,7 +220,9 @@ app.use((req, res, next) => {
           responseBody = body;
         }
       }
-      logStream.write(`[${timestamp}] RESPONSE ERROR: ${JSON.stringify(responseBody)}\n`);
+      const errorLog = `[${timestamp}] RESPONSE ERROR: ${JSON.stringify(responseBody)}`;
+      logStream.write(`${errorLog}\n`);
+      originalConsoleError(errorLog);
     }
     
     originalSend.call(this, body);
@@ -208,14 +238,20 @@ app.get('/api/transactions/jwks', async (req, res) => {
     const jwks = await CryptoService.getJWKS();
     res.json(jwks);
   } catch (error) {
-    logger.error('Error getting JWKS:', error);
+    const timestamp = new Date().toISOString();
+    const logMessage = `[${timestamp}] ERROR: Error getting JWKS: ${error.message}`;
+    originalConsoleError(logMessage);
+    logStream.write(`${logMessage}\n${error.stack}\n`);
     res.status(500).json({ error: 'Failed to get JWKS' });
   }
 });
 
 // Handle the legacy /jwks.json route by redirecting to the proper endpoint
 app.get('/jwks.json', (req, res) => {
-  logger.warn('Legacy JWKS endpoint accessed at /jwks.json, redirecting to /api/transactions/jwks');
+  const timestamp = new Date().toISOString();
+  const logMessage = `[${timestamp}] WARN: Legacy JWKS endpoint accessed at /jwks.json, redirecting to /api/transactions/jwks`;
+  originalConsoleWarn(logMessage);
+  logStream.write(`${logMessage}\n`);
   res.redirect('/api/transactions/jwks');
 });
 
@@ -248,7 +284,10 @@ app.get('/', (req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  logger.error(`Error in ${req.method} ${req.url}:`, err);
+  const timestamp = new Date().toISOString();
+  const logMessage = `[${timestamp}] ERROR: Error in ${req.method} ${req.url}: ${err.message}`;
+  originalConsoleError(logMessage);
+  logStream.write(`${logMessage}\n${err.stack}\n`);
   
   res.status(500).json({
     error: 'Server error',
@@ -256,24 +295,24 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Simulate some initial log messages for testing
-logger.log('Application initialization completed');
-logger.warn('This is a test warning message');
-logger.error('This is a test error message', new Error('Test error'));
-logger.debug('This is a debug message with details about the environment');
+// Simulate some initial log messages for testing - use direct logging to avoid recursion
+logStream.write(`[${new Date().toISOString()}] INFO: Application initialization completed\n`);
+logStream.write(`[${new Date().toISOString()}] WARN: This is a test warning message\n`);
+logStream.write(`[${new Date().toISOString()}] ERROR: This is a test error message - Test error\n`);
+logStream.write(`[${new Date().toISOString()}] DEBUG: This is a debug message with details about the environment\n`);
 
 // Generate some sample transactions for logging
 setTimeout(() => {
-  logger.log('Sample transaction processed: transfer of €1000 from account JMB123 to account JMB456');
-  logger.log('User johndoe logged in successfully');
-  logger.warn('Failed login attempt for user testuser - Invalid credentials');
-  logger.error('Transaction failed', new Error('Insufficient funds'));
+  logStream.write(`[${new Date().toISOString()}] INFO: Sample transaction processed: transfer of €1000 from account JMB123 to account JMB456\n`);
+  logStream.write(`[${new Date().toISOString()}] INFO: User johndoe logged in successfully\n`);
+  logStream.write(`[${new Date().toISOString()}] WARN: Failed login attempt for user testuser - Invalid credentials\n`);
+  logStream.write(`[${new Date().toISOString()}] ERROR: Transaction failed - Insufficient funds\n`);
 }, 2000);
 
 // Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  logger.log(`JMB Pank server running on port ${PORT}`);
-  logger.log(`API Documentation available at http://localhost:${PORT}/api/docs`);
-  logger.log(`JWKS available at http://localhost:${PORT}/api/transactions/jwks`);
+  directLog(`JMB Pank server running on port ${PORT}`);
+  directLog(`API Documentation available at http://localhost:${PORT}/api/docs`);
+  directLog(`JWKS available at http://localhost:${PORT}/api/transactions/jwks`);
 });
