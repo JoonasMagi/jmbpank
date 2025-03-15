@@ -53,7 +53,7 @@ class CryptoService {
       
       // Store in database
       await run(
-        'INSERT INTO keys (key_id, public_key, private_key) VALUES (?, ?, ?)',
+        'INSERT INTO keys (key_id, public_key, private_key, active) VALUES (?, ?, ?, 1)',
         [keyId, publicKey, privateKey]
       );
       
@@ -138,15 +138,40 @@ class CryptoService {
   }
 
   /**
+   * Base64Url encoding helper
+   * @param {Buffer} buffer - Buffer to encode
+   * @returns {string} Base64Url encoded string
+   */
+  static base64UrlEncode(buffer) {
+    return buffer.toString('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=/g, '');
+  }
+
+  /**
    * Convert JWK to PEM format
    * @param {Object} jwk - JSON Web Key
    * @returns {string} PEM format public key
    */
   static jwkToPem(jwk) {
     try {
+      // Convert the base64url-encoded values back to regular base64
+      let nBase64 = jwk.n.replace(/-/g, '+').replace(/_/g, '/');
+      let eBase64 = jwk.e.replace(/-/g, '+').replace(/_/g, '/');
+      
+      // Add padding if needed
+      while (nBase64.length % 4 !== 0) {
+        nBase64 += '=';
+      }
+      
+      while (eBase64.length % 4 !== 0) {
+        eBase64 += '=';
+      }
+      
       // Decode base64 values to binary
-      const nBytes = Buffer.from(jwk.n, 'base64');
-      const eBytes = Buffer.from(jwk.e, 'base64');
+      const nBytes = Buffer.from(nBase64, 'base64');
+      const eBytes = Buffer.from(eBase64, 'base64');
       
       // Convert bytes to BigIntegers
       const nBigInt = new forge.jsbn.BigInteger(nBytes.toString('hex'), 16);
@@ -186,26 +211,31 @@ class CryptoService {
       
       const jwks = {
         keys: keys.map(key => {
-          // Convert PEM to JWK format
-          const forge_key = forge.pki.publicKeyFromPem(key.public_key);
-          const n = Buffer.from(forge_key.n.toString(16), 'hex').toString('base64')
-            .replace(/\+/g, '-')
-            .replace(/\//g, '_')
-            .replace(/=/g, '');
-          const e = Buffer.from(forge_key.e.toString(16), 'hex').toString('base64')
-            .replace(/\+/g, '-')
-            .replace(/\//g, '_')
-            .replace(/=/g, '');
-          
-          return {
-            kty: 'RSA',
-            kid: key.key_id,
-            use: 'sig',
-            alg: 'RS256',
-            n,
-            e
-          };
-        })
+          try {
+            // Convert PEM to JWK format
+            const forge_key = forge.pki.publicKeyFromPem(key.public_key);
+            
+            // Get modulus and exponent as raw bytes
+            const nBuffer = Buffer.from(forge_key.n.toString(16), 'hex');
+            const eBuffer = Buffer.from(forge_key.e.toString(16), 'hex');
+            
+            // Convert to base64url encoding
+            const n = this.base64UrlEncode(nBuffer);
+            const e = this.base64UrlEncode(eBuffer);
+            
+            return {
+              kty: 'RSA',
+              kid: key.key_id,
+              use: 'sig',
+              alg: 'RS256',
+              n,
+              e
+            };
+          } catch (error) {
+            console.error('Error converting key to JWK:', error);
+            return null;
+          }
+        }).filter(Boolean) // Remove null entries
       };
       
       return jwks;
@@ -213,26 +243,31 @@ class CryptoService {
       console.error('Error getting JWKS:', error);
       // Return a minimal JWKS with a temporary key
       const { keyId, publicKey } = await this.getActiveKeyPair();
-      const forge_key = forge.pki.publicKeyFromPem(publicKey);
-      const n = Buffer.from(forge_key.n.toString(16), 'hex').toString('base64')
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=/g, '');
-      const e = Buffer.from(forge_key.e.toString(16), 'hex').toString('base64')
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=/g, '');
-      
-      return {
-        keys: [{
-          kty: 'RSA',
-          kid: keyId,
-          use: 'sig',
-          alg: 'RS256',
-          n,
-          e
-        }]
-      };
+      try {
+        const forge_key = forge.pki.publicKeyFromPem(publicKey);
+        
+        // Get modulus and exponent as raw bytes
+        const nBuffer = Buffer.from(forge_key.n.toString(16), 'hex');
+        const eBuffer = Buffer.from(forge_key.e.toString(16), 'hex');
+        
+        // Convert to base64url encoding
+        const n = this.base64UrlEncode(nBuffer);
+        const e = this.base64UrlEncode(eBuffer);
+        
+        return {
+          keys: [{
+            kty: 'RSA',
+            kid: keyId,
+            use: 'sig',
+            alg: 'RS256',
+            n,
+            e
+          }]
+        };
+      } catch (innerError) {
+        console.error('Error creating fallback JWKS:', innerError);
+        throw new Error('Failed to generate JWKS');
+      }
     }
   }
 }
