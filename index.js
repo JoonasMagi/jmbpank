@@ -12,6 +12,12 @@ if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
 
+// Create logs directory if not exists
+const logsDir = path.join(__dirname, 'logs');
+if (!fs.existsSync(logsDir)) {
+  fs.mkdirSync(logsDir, { recursive: true });
+}
+
 // Initialize database first
 const db = require('./models/db');
 
@@ -40,6 +46,7 @@ const accountRoutes = require('./routes/accountRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
 const userRoutes = require('./routes/userRoutes');
 const sessionRoutes = require('./routes/sessionRoutes');
+const logRoutes = require('./routes/logRoutes');
 
 // Swagger configuration
 const swaggerOptions = {
@@ -88,6 +95,7 @@ apiRouter.use('/accounts', accountRoutes);
 apiRouter.use('/transactions', transactionRoutes);
 apiRouter.use('/users', userRoutes);
 apiRouter.use('/sessions', sessionRoutes);
+apiRouter.use('/logs', logRoutes);
 
 // Special route for JWKS as .json file - needed for central bank registration
 app.get('/api/transactions/jwks', async (req, res) => {
@@ -110,7 +118,8 @@ apiRouter.get('/', (req, res) => {
       users: '/api/users',
       accounts: '/api/accounts',
       transactions: '/api/transactions',
-      sessions: '/api/sessions'
+      sessions: '/api/sessions',
+      logs: '/api/logs'
     },
     centralBankEndpoints: {
       jwksUrl: 'https://joonasmagi.me/jwks.json',
@@ -124,9 +133,33 @@ app.get('/', (req, res) => {
   res.redirect('/api');
 });
 
+// Setup logging to file
+const logFile = path.join(logsDir, `app-${new Date().toISOString().slice(0, 10)}.log`);
+const logStream = fs.createWriteStream(logFile, { flags: 'a' });
+
+// Log requests
+app.use((req, res, next) => {
+  const timestamp = new Date().toISOString();
+  const message = `[${timestamp}] ${req.method} ${req.url} - User: ${req.user ? req.user.username : 'anonymous'}`;
+  
+  // Write to log file
+  logStream.write(`${message}\n`);
+  
+  // Continue with request
+  next();
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  const timestamp = new Date().toISOString();
+  const errorMsg = `[${timestamp}] ERROR: ${err.stack}`;
+  
+  // Log to console
+  console.error(errorMsg);
+  
+  // Write to log file
+  logStream.write(`${errorMsg}\n`);
+  
   res.status(500).json({
     error: 'Server error',
     message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
@@ -136,7 +169,10 @@ app.use((err, req, res, next) => {
 // Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`JMB Pank server running on port ${PORT}`);
+  const message = `JMB Pank server running on port ${PORT}`;
+  console.log(message);
+  logStream.write(`[${new Date().toISOString()}] ${message}\n`);
+  
   console.log(`API Documentation available at http://localhost:${PORT}/api/docs`);
   console.log(`JWKS available at http://localhost:${PORT}/api/transactions/jwks`);
 });
