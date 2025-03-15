@@ -125,8 +125,7 @@ class TransactionService {
       }
       
       // Convert JWK to PEM format for verification
-      // This is a simplified approach - in production you'd use a proper JWK to PEM converter
-      const publicKey = key.publicKey || `-----BEGIN PUBLIC KEY-----\n${key.n}\n-----END PUBLIC KEY-----`;
+      const publicKey = CryptoService.jwkToPem(key);
       
       // Verify JWT signature
       const decodedPayload = CryptoService.verifyToken(jwt, publicKey);
