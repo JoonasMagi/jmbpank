@@ -39,6 +39,7 @@ setTimeout(() => {
 const accountRoutes = require('./routes/accountRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
 const userRoutes = require('./routes/userRoutes');
+const sessionRoutes = require('./routes/sessionRoutes');
 
 // Swagger configuration
 const swaggerOptions = {
@@ -86,6 +87,7 @@ apiRouter.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs, {
 apiRouter.use('/accounts', accountRoutes);
 apiRouter.use('/transactions', transactionRoutes);
 apiRouter.use('/users', userRoutes);
+apiRouter.use('/sessions', sessionRoutes);
 
 // Special route for JWKS as .json file - needed for central bank registration
 app.get('/api/transactions/jwks', async (req, res) => {
@@ -107,7 +109,8 @@ apiRouter.get('/', (req, res) => {
     endpoints: {
       users: '/api/users',
       accounts: '/api/accounts',
-      transactions: '/api/transactions'
+      transactions: '/api/transactions',
+      sessions: '/api/sessions'
     },
     centralBankEndpoints: {
       jwksUrl: 'https://joonasmagi.me/jwks.json',
