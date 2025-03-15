@@ -213,8 +213,17 @@ app.get('/api/transactions/jwks', async (req, res) => {
   }
 });
 
+// Handle the legacy /jwks.json route by redirecting to the proper endpoint
+app.get('/jwks.json', (req, res) => {
+  logger.warn('Legacy JWKS endpoint accessed at /jwks.json, redirecting to /api/transactions/jwks');
+  res.redirect('/api/transactions/jwks');
+});
+
 // Root route
 apiRouter.get('/', (req, res) => {
+  // Get the base URL for central bank endpoints
+  const baseUrl = `${req.protocol}://${req.get('host')}`;
+  
   res.json({
     message: 'Welcome to JMB Pank API',
     documentation: '/api/docs',
@@ -226,8 +235,8 @@ apiRouter.get('/', (req, res) => {
       logs: '/api/logs'
     },
     centralBankEndpoints: {
-      jwksUrl: 'https://joonasmagi.me/jwks.json',
-      transactionUrl: 'https://joonasmagi.me/api/transactions/b2b'
+      jwksUrl: `${baseUrl}/api/transactions/jwks`,
+      transactionUrl: `${baseUrl}/api/transactions/b2b`
     }
   });
 });
