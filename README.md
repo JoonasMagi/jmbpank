@@ -83,15 +83,18 @@ Pankadevaheliste ülekannete tegemiseks on vaja:
    - Külasta keskpanga lehte: https://henno.cfd/central-bank
    - Registreeri oma pank, lisades:
      - Panga nimi: "JMB Pank"
-     - Panga prefiks: "JMB"
+     - Panga prefiks: "JMB" (või vali oma prefiks)
      - JWKS URL: "https://joonasmagi.me/jwks.json"
      - Tehingute URL: "https://joonasmagi.me/api/transactions/b2b"
 
-3. **Salvesta API võti**
-   Pärast panga registreerimist saad API võtme, mis tuleb lisada .env faili:
+3. **Salvesta API võti ja panga prefiks**
+   Pärast panga registreerimist saad API võtme ja panga prefiksi, mis tuleb lisada .env faili:
    ```
    API_KEY=your_api_key_here
+   BANK_PREFIX=your_bank_prefix
    ```
+
+   **NB!** Panga prefiks on kohustuslik ja peab olema sama, mis registreerimisel määratud.
 
 4. **Taaskäivita rakendus**
    ```bash
@@ -123,3 +126,19 @@ sudo systemctl restart nginx
 ```
 
 5. Veenduge, et teie domeeni DNS seadistused viitavad õigele IP-aadressile.
+
+## Koodi vormindamine
+
+Projekt kasutab Prettier'it koodi vormindamiseks. Järgige neid samme, et vormindada koodi:
+
+1. **Vorminda kõik failid**
+   ```bash
+   npm run format
+   ```
+
+2. **Kontrolli, kas failid on vormindatud**
+   ```bash
+   npm run format:check
+   ```
+
+Prettier konfiguratsioon on määratud `.prettierrc` failis. Vormindamisest välja jäetud failid on loetletud `.prettierignore` failis.

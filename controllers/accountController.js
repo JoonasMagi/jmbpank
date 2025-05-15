@@ -96,7 +96,7 @@ exports.getUserAccounts = async (req, res) => {
     if (!req.user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-    
+
     const accounts = await Account.getByUserId(req.user.id);
     res.json(accounts);
   } catch (error) {
@@ -138,11 +138,11 @@ exports.getUserAccounts = async (req, res) => {
 exports.getAccount = async (req, res) => {
   try {
     const account = await Account.getByAccountNumber(req.params.accountNumber);
-    
+
     if (!account) {
       return res.status(404).json({ error: 'Account not found' });
     }
-    
+
     res.json(account);
   } catch (error) {
     console.error('Error getting account:', error);
@@ -198,27 +198,27 @@ exports.createAccount = async (req, res) => {
     if (!req.user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-    
+
     const { accountType = 'checking', currency = 'EUR' } = req.body;
-    
+
     // Validate account type
     if (!['checking', 'savings'].includes(accountType)) {
       return res.status(400).json({ error: 'Invalid account type' });
     }
-    
+
     // Validate currency
     if (!['EUR', 'USD'].includes(currency)) {
       return res.status(400).json({ error: 'Invalid currency' });
     }
-    
+
     const account = await Account.create({
       userId: req.user.id,
       ownerName: req.user.username,
       accountType,
       currency,
-      initialBalance: 1000 // Give new users some money to work with
+      initialBalance: 1000, // Give new users some money to work with
     });
-    
+
     res.status(201).json(account);
   } catch (error) {
     console.error('Error creating account:', error);

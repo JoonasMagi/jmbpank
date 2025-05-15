@@ -36,7 +36,7 @@ const originalConsoleDebug = console.debug;
 
 // Create a logger function
 const logger = {
-  log: (message) => {
+  log: message => {
     const timestamp = new Date().toISOString();
     const logMessage = `[${timestamp}] INFO: ${message}`;
     originalConsoleLog(logMessage);
@@ -49,40 +49,40 @@ const logger = {
     originalConsoleError(logMessage);
     logStream.write(`${logMessage}${stackTrace}\n`);
   },
-  warn: (message) => {
+  warn: message => {
     const timestamp = new Date().toISOString();
     const logMessage = `[${timestamp}] WARN: ${message}`;
     originalConsoleWarn(logMessage);
     logStream.write(`${logMessage}\n`);
   },
-  debug: (message) => {
+  debug: message => {
     const timestamp = new Date().toISOString();
     const logMessage = `[${timestamp}] DEBUG: ${message}`;
     originalConsoleDebug(logMessage);
     logStream.write(`${logMessage}\n`);
-  }
+  },
 };
 
 // Override console methods to log to file
-console.log = function() {
+console.log = function () {
   const args = Array.from(arguments);
   const message = args.join(' ');
   logger.log(message);
 };
 
-console.error = function() {
+console.error = function () {
   const args = Array.from(arguments);
   const message = args.join(' ');
   logger.error(message);
 };
 
-console.warn = function() {
+console.warn = function () {
   const args = Array.from(arguments);
   const message = args.join(' ');
   logger.warn(message);
 };
 
-console.debug = function() {
+console.debug = function () {
   const args = Array.from(arguments);
   const message = args.join(' ');
   logger.debug(message);
@@ -106,14 +106,16 @@ directLog('Database initialization started');
 const app = express();
 
 // Configure CORS with specific options
-app.use(cors({
-  origin: '*', // Allow all origins for now
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
-  preflightContinue: false,
-  optionsSuccessStatus: 204
-}));
+app.use(
+  cors({
+    origin: '*', // Allow all origins for now
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
+  })
+);
 
 // Parse JSON bodies with larger size limit
 app.use(express.json({ limit: '10mb' }));
@@ -128,23 +130,26 @@ app.use(express.static(path.join(__dirname, 'public')));
 directLog('JMB Pank application starting up');
 directLog(`Environment: ${process.env.NODE_ENV}`);
 
-// Initialize crypto service (generate keys on startup) after the database is set up
-setTimeout(() => {
-  try {
-    const CryptoService = require('./services/cryptoService');
-    CryptoService.createAndStoreKeyPair('1').catch(err => {
+// Initialize crypto service (generate NEW keys in memory on startup)
+try {
+  const CryptoService = require('./services/cryptoService');
+  // Generate a new key pair on each startup with forceNew=true
+  CryptoService.createAndStoreKeyPair('1', true)
+    .then(() => {
+      directLog('RSA key pair generated and stored in memory successfully');
+    })
+    .catch(err => {
       const timestamp = new Date().toISOString();
       const logMessage = `[${timestamp}] ERROR: Failed to initialize crypto keys: ${err.message}`;
       originalConsoleError(logMessage);
       logStream.write(`${logMessage}\n${err.stack}\n`);
     });
-  } catch (err) {
-    const timestamp = new Date().toISOString();
-    const logMessage = `[${timestamp}] ERROR: Error loading CryptoService: ${err.message}`;
-    originalConsoleError(logMessage);
-    logStream.write(`${logMessage}\n${err.stack}\n`);
-  }
-}, 1000); // Delay crypto initialization to ensure DB tables are created
+} catch (err) {
+  const timestamp = new Date().toISOString();
+  const logMessage = `[${timestamp}] ERROR: Error loading CryptoService: ${err.message}`;
+  originalConsoleError(logMessage);
+  logStream.write(`${logMessage}\n${err.stack}\n`);
+}
 
 // Routes
 const accountRoutes = require('./routes/accountRoutes');
@@ -163,26 +168,26 @@ const swaggerOptions = {
       version: '1.0.0',
       description: 'Simple bank API that supports interbank transactions',
       contact: {
-        name: 'Joonas Mägi'
-      }
+        name: 'Joonas Mägi',
+      },
     },
     servers: [
       {
         url: `/api`,
-        description: 'API Base URL'
-      }
+        description: 'API Base URL',
+      },
     ],
     components: {
       securitySchemes: {
         bearerAuth: {
           type: 'http',
           scheme: 'bearer',
-          bearerFormat: 'JWT'
-        }
-      }
-    }
+          bearerFormat: 'JWT',
+        },
+      },
+    },
   },
-  apis: ['./controllers/*.js']
+  apis: ['./controllers/*.js'],
 };
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
@@ -192,9 +197,13 @@ const apiRouter = express.Router();
 app.use('/api', apiRouter);
 
 // Mount Swagger UI at /api-docs
-apiRouter.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs, {
-  explorer: true
-}));
+apiRouter.use(
+  '/docs',
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerDocs, {
+    explorer: true,
+  })
+);
 
 // Special route for JWKS as .json file - needed for central bank registration
 app.get('/api/transactions/jwks', async (req, res) => {
@@ -224,7 +233,7 @@ app.get('/jwks.json', (req, res) => {
 apiRouter.get('/', (req, res) => {
   // Get the base URL for central bank endpoints
   const baseUrl = `${req.protocol}://${req.get('host')}`;
-  
+
   res.json({
     message: 'Welcome to JMB Pank API',
     environment: process.env.NODE_ENV,
@@ -235,12 +244,12 @@ apiRouter.get('/', (req, res) => {
       transactions: '/api/transactions',
       sessions: '/api/sessions',
       logs: '/api/logs',
-      test: process.env.NODE_ENV !== 'production' ? '/api/test' : null
+      test: process.env.NODE_ENV !== 'production' ? '/api/test' : null,
     },
     centralBankEndpoints: {
       jwksUrl: `${baseUrl}/api/transactions/jwks`,
-      transactionUrl: `${baseUrl}/api/transactions/b2b`
-    }
+      transactionUrl: `${baseUrl}/api/transactions/b2b`,
+    },
   });
 });
 
@@ -248,26 +257,26 @@ apiRouter.get('/', (req, res) => {
 app.use((req, res, next) => {
   const timestamp = new Date().toISOString();
   const message = `[${timestamp}] REQUEST: ${req.method} ${req.url} - User: ${req.user ? req.user.username : 'anonymous'}`;
-  
+
   // Write to log file - directly to avoid infinite recursion
   logStream.write(`${message}\n`);
   originalConsoleLog(message);
-  
+
   // Log request body for non-GET requests (except for sensitive endpoints)
   if (req.method !== 'GET' && !req.url.includes('/login') && !req.url.includes('/register')) {
     const bodyLog = `[${timestamp}] REQUEST BODY: ${JSON.stringify(req.body)}`;
     logStream.write(`${bodyLog}\n`);
     originalConsoleLog(bodyLog);
   }
-  
+
   // Capture the response
   const originalSend = res.send;
-  res.send = function(body) {
+  res.send = function (body) {
     // Log response status
     const responseLog = `[${timestamp}] RESPONSE: ${req.method} ${req.url} - Status: ${res.statusCode}`;
     logStream.write(`${responseLog}\n`);
     originalConsoleLog(responseLog);
-    
+
     // For error responses, log more details
     if (res.statusCode >= 400) {
       let responseBody = body;
@@ -283,10 +292,10 @@ app.use((req, res, next) => {
       logStream.write(`${errorLog}\n`);
       originalConsoleError(errorLog);
     }
-    
+
     originalSend.call(this, body);
   };
-  
+
   next();
 });
 
@@ -315,13 +324,19 @@ app.use(errorHandler);
 logStream.write(`[${new Date().toISOString()}] INFO: Application initialization completed\n`);
 logStream.write(`[${new Date().toISOString()}] WARN: This is a test warning message\n`);
 logStream.write(`[${new Date().toISOString()}] ERROR: This is a test error message - Test error\n`);
-logStream.write(`[${new Date().toISOString()}] DEBUG: This is a debug message with details about the environment\n`);
+logStream.write(
+  `[${new Date().toISOString()}] DEBUG: This is a debug message with details about the environment\n`
+);
 
 // Generate some sample transactions for logging
 setTimeout(() => {
-  logStream.write(`[${new Date().toISOString()}] INFO: Sample transaction processed: transfer of €1000 from account JMB123 to account JMB456\n`);
+  logStream.write(
+    `[${new Date().toISOString()}] INFO: Sample transaction processed: transfer of €1000 from account JMB123 to account JMB456\n`
+  );
   logStream.write(`[${new Date().toISOString()}] INFO: User johndoe logged in successfully\n`);
-  logStream.write(`[${new Date().toISOString()}] WARN: Failed login attempt for user testuser - Invalid credentials\n`);
+  logStream.write(
+    `[${new Date().toISOString()}] WARN: Failed login attempt for user testuser - Invalid credentials\n`
+  );
   logStream.write(`[${new Date().toISOString()}] ERROR: Transaction failed - Insufficient funds\n`);
 }, 2000);
 

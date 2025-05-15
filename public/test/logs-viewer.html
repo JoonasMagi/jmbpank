@@ -1,452 +1,463 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>JMB Pank - Log Viewer</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            padding: 20px;
-            background-color: #f8f9fa;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        h1 {
-            color: #2c3e50;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 10px;
-        }
-        .container {
-            background-color: white;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-        }
-        .toolbar {
-            margin-bottom: 15px;
-            display: flex;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        button {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        button:hover {
-            background-color: #2980b9;
-        }
-        .filter-options {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        select, input {
-            padding: 8px;
-            border-radius: 4px;
-            border: 1px solid #ddd;
-        }
-        .log-entry {
-            padding: 10px;
-            margin-bottom: 5px;
-            border-radius: 4px;
-            font-family: Consolas, monospace;
-            font-size: 14px;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-            display: flex;
-            align-items: flex-start;
-        }
-        .log-entry .timestamp {
-            color: #666;
-            margin-right: 10px;
-            min-width: 180px;
-        }
-        .log-entry .level {
-            font-weight: bold;
-            padding: 2px 6px;
-            border-radius: 3px;
-            margin-right: 10px;
-            min-width: 60px;
-            text-align: center;
-        }
-        .log-entry .error-code {
-            font-weight: bold;
-            padding: 2px 6px;
-            border-radius: 3px;
-            margin-right: 10px;
-            background-color: #ffeaa7;
-            color: #d35400;
-        }
-        .log-entry .http-status {
-            font-weight: bold;
-            padding: 2px 6px;
-            border-radius: 3px;
-            margin-right: 10px;
-            background-color: #dfe6e9;
-            color: #2d3436;
-        }
-        .log-entry .message {
-            flex-grow: 1;
-        }
-        .info {
-            background-color: #e8f4fc;
-        }
-        .info .level {
-            background-color: #3498db;
-            color: white;
-        }
-        .warn {
-            background-color: #fff7e0;
-        }
-        .warn .level {
-            background-color: #f39c12;
-            color: white;
-        }
-        .error {
-            background-color: #fce8e8;
-        }
-        .error .level {
-            background-color: #e74c3c;
-            color: white;
-        }
-        .debug {
-            background-color: #f0f5f9;
-        }
-        .debug .level {
-            background-color: #7f8c8d;
-            color: white;
-        }
-        .log-list {
-            max-height: 600px;
-            overflow-y: auto;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        .no-logs {
-            padding: 20px;
-            text-align: center;
-            color: #7f8c8d;
-        }
-        .stats {
-            display: flex;
-            gap: 15px;
-            margin-top: 15px;
-            flex-wrap: wrap;
-        }
-        .stat-card {
-            background-color: white;
-            border-radius: 4px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            padding: 10px 15px;
-            min-width: 120px;
-            border-left: 4px solid;
-        }
-        .stat-card.info { border-left-color: #3498db; }
-        .stat-card.warn { border-left-color: #f39c12; }
-        .stat-card.error { border-left-color: #e74c3c; }
-        .stat-card.debug { border-left-color: #7f8c8d; }
-        .stat-label {
-            font-size: 12px;
-            color: #7f8c8d;
-        }
-        .stat-value {
-            font-size: 18px;
-            font-weight: bold;
-            margin-top: 5px;
-        }
-        .error-details {
-            margin-top: 5px;
-            background-color: rgba(255, 255, 255, 0.7);
-            padding: 8px;
-            border-radius: 4px;
-            border-left: 3px solid #e74c3c;
-        }
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        padding: 20px;
+        background-color: #f8f9fa;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      h1 {
+        color: #2c3e50;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 10px;
+      }
+      .container {
+        background-color: white;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+      }
+      .toolbar {
+        margin-bottom: 15px;
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      button {
+        background-color: #3498db;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+      button:hover {
+        background-color: #2980b9;
+      }
+      .filter-options {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      select,
+      input {
+        padding: 8px;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+      }
+      .log-entry {
+        padding: 10px;
+        margin-bottom: 5px;
+        border-radius: 4px;
+        font-family: Consolas, monospace;
+        font-size: 14px;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        display: flex;
+        align-items: flex-start;
+      }
+      .log-entry .timestamp {
+        color: #666;
+        margin-right: 10px;
+        min-width: 180px;
+      }
+      .log-entry .level {
+        font-weight: bold;
+        padding: 2px 6px;
+        border-radius: 3px;
+        margin-right: 10px;
+        min-width: 60px;
+        text-align: center;
+      }
+      .log-entry .error-code {
+        font-weight: bold;
+        padding: 2px 6px;
+        border-radius: 3px;
+        margin-right: 10px;
+        background-color: #ffeaa7;
+        color: #d35400;
+      }
+      .log-entry .http-status {
+        font-weight: bold;
+        padding: 2px 6px;
+        border-radius: 3px;
+        margin-right: 10px;
+        background-color: #dfe6e9;
+        color: #2d3436;
+      }
+      .log-entry .message {
+        flex-grow: 1;
+      }
+      .info {
+        background-color: #e8f4fc;
+      }
+      .info .level {
+        background-color: #3498db;
+        color: white;
+      }
+      .warn {
+        background-color: #fff7e0;
+      }
+      .warn .level {
+        background-color: #f39c12;
+        color: white;
+      }
+      .error {
+        background-color: #fce8e8;
+      }
+      .error .level {
+        background-color: #e74c3c;
+        color: white;
+      }
+      .debug {
+        background-color: #f0f5f9;
+      }
+      .debug .level {
+        background-color: #7f8c8d;
+        color: white;
+      }
+      .log-list {
+        max-height: 600px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+      .no-logs {
+        padding: 20px;
+        text-align: center;
+        color: #7f8c8d;
+      }
+      .stats {
+        display: flex;
+        gap: 15px;
+        margin-top: 15px;
+        flex-wrap: wrap;
+      }
+      .stat-card {
+        background-color: white;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        padding: 10px 15px;
+        min-width: 120px;
+        border-left: 4px solid;
+      }
+      .stat-card.info {
+        border-left-color: #3498db;
+      }
+      .stat-card.warn {
+        border-left-color: #f39c12;
+      }
+      .stat-card.error {
+        border-left-color: #e74c3c;
+      }
+      .stat-card.debug {
+        border-left-color: #7f8c8d;
+      }
+      .stat-label {
+        font-size: 12px;
+        color: #7f8c8d;
+      }
+      .stat-value {
+        font-size: 18px;
+        font-weight: bold;
+        margin-top: 5px;
+      }
+      .error-details {
+        margin-top: 5px;
+        background-color: rgba(255, 255, 255, 0.7);
+        padding: 8px;
+        border-radius: 4px;
+        border-left: 3px solid #e74c3c;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <h1>JMB Pank - Log Viewer</h1>
     <div class="container">
-        <div class="toolbar">
-            <div class="action-buttons">
-                <button id="refresh-logs">Refresh Logs</button>
-                <button id="clear-logs">Clear Logs</button>
-            </div>
-            <div class="filter-options">
-                <select id="level-filter">
-                    <option value="all">All Levels</option>
-                    <option value="info">Info</option>
-                    <option value="warn">Warning</option>
-                    <option value="error">Error</option>
-                    <option value="debug">Debug</option>
-                </select>
-                <input type="text" id="search-filter" placeholder="Search in logs...">
-                <input type="text" id="code-filter" placeholder="Filter by error code...">
-            </div>
+      <div class="toolbar">
+        <div class="action-buttons">
+          <button id="refresh-logs">Refresh Logs</button>
+          <button id="clear-logs">Clear Logs</button>
         </div>
-        
-        <div class="log-list" id="log-container">
-            <div class="no-logs">Loading logs...</div>
+        <div class="filter-options">
+          <select id="level-filter">
+            <option value="all">All Levels</option>
+            <option value="info">Info</option>
+            <option value="warn">Warning</option>
+            <option value="error">Error</option>
+            <option value="debug">Debug</option>
+          </select>
+          <input type="text" id="search-filter" placeholder="Search in logs..." />
+          <input type="text" id="code-filter" placeholder="Filter by error code..." />
         </div>
-        
-        <div class="stats">
-            <div class="stat-card info">
-                <div class="stat-label">INFO</div>
-                <div class="stat-value" id="info-count">0</div>
-            </div>
-            <div class="stat-card warn">
-                <div class="stat-label">WARNING</div>
-                <div class="stat-value" id="warn-count">0</div>
-            </div>
-            <div class="stat-card error">
-                <div class="stat-label">ERROR</div>
-                <div class="stat-value" id="error-count">0</div>
-            </div>
-            <div class="stat-card debug">
-                <div class="stat-label">DEBUG</div>
-                <div class="stat-value" id="debug-count">0</div>
-            </div>
-            <div class="stat-card" style="border-left-color: #9b59b6;">
-                <div class="stat-label">TOTAL</div>
-                <div class="stat-value" id="total-count">0</div>
-            </div>
+      </div>
+
+      <div class="log-list" id="log-container">
+        <div class="no-logs">Loading logs...</div>
+      </div>
+
+      <div class="stats">
+        <div class="stat-card info">
+          <div class="stat-label">INFO</div>
+          <div class="stat-value" id="info-count">0</div>
         </div>
+        <div class="stat-card warn">
+          <div class="stat-label">WARNING</div>
+          <div class="stat-value" id="warn-count">0</div>
+        </div>
+        <div class="stat-card error">
+          <div class="stat-label">ERROR</div>
+          <div class="stat-value" id="error-count">0</div>
+        </div>
+        <div class="stat-card debug">
+          <div class="stat-label">DEBUG</div>
+          <div class="stat-value" id="debug-count">0</div>
+        </div>
+        <div class="stat-card" style="border-left-color: #9b59b6">
+          <div class="stat-label">TOTAL</div>
+          <div class="stat-value" id="total-count">0</div>
+        </div>
+      </div>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Elements
-            const logContainer = document.getElementById('log-container');
-            const refreshButton = document.getElementById('refresh-logs');
-            const clearButton = document.getElementById('clear-logs');
-            const levelFilter = document.getElementById('level-filter');
-            const searchFilter = document.getElementById('search-filter');
-            const codeFilter = document.getElementById('code-filter');
-            
-            // Counters
-            const infoCount = document.getElementById('info-count');
-            const warnCount = document.getElementById('warn-count');
-            const errorCount = document.getElementById('error-count');
-            const debugCount = document.getElementById('debug-count');
-            const totalCount = document.getElementById('total-count');
-            
-            // Log storage
-            let logs = [];
-            
-            // Load logs
-            function loadLogs() {
-                fetch('/api/logs')
-                    .then(response => response.json())
-                    .then(data => {
-                        // Make sure data is an array
-                        logs = Array.isArray(data) ? data : [];
-                        applyFiltersAndRender();
-                    })
-                    .catch(error => {
-                        logContainer.innerHTML = `<div class="no-logs">Error loading logs: ${error.message}</div>`;
-                        // Reset stats on error
-                        updateStats([]);
-                    });
-            }
-            
-            // Clear logs
-            function clearLogs() {
-                fetch('/api/logs/clear', { method: 'POST' })
-                    .then(() => {
-                        logs = [];
-                        applyFiltersAndRender();
-                    })
-                    .catch(error => {
-                        alert(`Error clearing logs: ${error.message}`);
-                    });
-            }
-            
-            // Parse log entry
-            function parseLogEntry(log) {
-                const timestampMatch = log.match(/\[(.*?)\]/);
-                let remainder = log;
-                let timestamp = '';
-                
-                if (timestampMatch) {
-                    timestamp = timestampMatch[1];
-                    remainder = log.substring(timestampMatch[0].length).trim();
-                }
-                
-                const levelMatch = remainder.match(/^(INFO|ERROR|WARN|DEBUG):/);
-                let level = 'unknown';
-                let message = remainder;
-                
-                if (levelMatch) {
-                    level = levelMatch[1].toLowerCase();
-                    message = remainder.substring(levelMatch[0].length).trim();
-                }
-                
-                // Extract error code if present
-                let errorCode = null;
-                const errorCodeMatch = message.match(/\[(USER_\d+|AUTH_\d+|VALIDATION_\d+|DB_\d+|SERVER_\d+)\]/);
-                if (errorCodeMatch) {
-                    errorCode = errorCodeMatch[1];
-                }
-                
-                // Extract HTTP status if present
-                let httpStatus = null;
-                const statusMatch = message.match(/Status: (\d+)/);
-                if (statusMatch) {
-                    httpStatus = statusMatch[1];
-                }
-                
-                return {
-                    timestamp,
-                    level,
-                    message,
-                    errorCode,
-                    httpStatus,
-                    raw: log
-                };
-            }
-            
-            // Apply filters and render logs
-            function applyFiltersAndRender() {
-                if (!Array.isArray(logs) || logs.length === 0) {
-                    logContainer.innerHTML = '<div class="no-logs">No logs found</div>';
-                    updateStats([]);
-                    return;
-                }
-                
-                const levelValue = levelFilter.value;
-                const searchValue = searchFilter.value.toLowerCase();
-                const codeValue = codeFilter.value.toUpperCase();
-                
-                let filteredLogs = logs.map(parseLogEntry);
-                
-                // Apply level filter
-                if (levelValue !== 'all') {
-                    filteredLogs = filteredLogs.filter(log => log.level === levelValue);
-                }
-                
-                // Apply search filter
-                if (searchValue) {
-                    filteredLogs = filteredLogs.filter(log => 
-                        log.raw.toLowerCase().includes(searchValue)
-                    );
-                }
-                
-                // Apply code filter
-                if (codeValue) {
-                    filteredLogs = filteredLogs.filter(log => 
-                        log.errorCode && log.errorCode.includes(codeValue)
-                    );
-                }
-                
-                renderLogs(filteredLogs);
-                updateStats(logs.map(parseLogEntry));
-            }
-            
-            // Render logs
-            function renderLogs(parsedLogs) {
-                if (parsedLogs.length === 0) {
-                    logContainer.innerHTML = '<div class="no-logs">No logs found</div>';
-                    return;
-                }
-                
-                let html = parsedLogs.map(log => {
-                    let logHtml = `
+      document.addEventListener('DOMContentLoaded', function () {
+        // Elements
+        const logContainer = document.getElementById('log-container');
+        const refreshButton = document.getElementById('refresh-logs');
+        const clearButton = document.getElementById('clear-logs');
+        const levelFilter = document.getElementById('level-filter');
+        const searchFilter = document.getElementById('search-filter');
+        const codeFilter = document.getElementById('code-filter');
+
+        // Counters
+        const infoCount = document.getElementById('info-count');
+        const warnCount = document.getElementById('warn-count');
+        const errorCount = document.getElementById('error-count');
+        const debugCount = document.getElementById('debug-count');
+        const totalCount = document.getElementById('total-count');
+
+        // Log storage
+        let logs = [];
+
+        // Load logs
+        function loadLogs() {
+          fetch('/api/logs')
+            .then(response => response.json())
+            .then(data => {
+              // Make sure data is an array
+              logs = Array.isArray(data) ? data : [];
+              applyFiltersAndRender();
+            })
+            .catch(error => {
+              logContainer.innerHTML = `<div class="no-logs">Error loading logs: ${error.message}</div>`;
+              // Reset stats on error
+              updateStats([]);
+            });
+        }
+
+        // Clear logs
+        function clearLogs() {
+          fetch('/api/logs/clear', { method: 'POST' })
+            .then(() => {
+              logs = [];
+              applyFiltersAndRender();
+            })
+            .catch(error => {
+              alert(`Error clearing logs: ${error.message}`);
+            });
+        }
+
+        // Parse log entry
+        function parseLogEntry(log) {
+          const timestampMatch = log.match(/\[(.*?)\]/);
+          let remainder = log;
+          let timestamp = '';
+
+          if (timestampMatch) {
+            timestamp = timestampMatch[1];
+            remainder = log.substring(timestampMatch[0].length).trim();
+          }
+
+          const levelMatch = remainder.match(/^(INFO|ERROR|WARN|DEBUG):/);
+          let level = 'unknown';
+          let message = remainder;
+
+          if (levelMatch) {
+            level = levelMatch[1].toLowerCase();
+            message = remainder.substring(levelMatch[0].length).trim();
+          }
+
+          // Extract error code if present
+          let errorCode = null;
+          const errorCodeMatch = message.match(
+            /\[(USER_\d+|AUTH_\d+|VALIDATION_\d+|DB_\d+|SERVER_\d+)\]/
+          );
+          if (errorCodeMatch) {
+            errorCode = errorCodeMatch[1];
+          }
+
+          // Extract HTTP status if present
+          let httpStatus = null;
+          const statusMatch = message.match(/Status: (\d+)/);
+          if (statusMatch) {
+            httpStatus = statusMatch[1];
+          }
+
+          return {
+            timestamp,
+            level,
+            message,
+            errorCode,
+            httpStatus,
+            raw: log,
+          };
+        }
+
+        // Apply filters and render logs
+        function applyFiltersAndRender() {
+          if (!Array.isArray(logs) || logs.length === 0) {
+            logContainer.innerHTML = '<div class="no-logs">No logs found</div>';
+            updateStats([]);
+            return;
+          }
+
+          const levelValue = levelFilter.value;
+          const searchValue = searchFilter.value.toLowerCase();
+          const codeValue = codeFilter.value.toUpperCase();
+
+          let filteredLogs = logs.map(parseLogEntry);
+
+          // Apply level filter
+          if (levelValue !== 'all') {
+            filteredLogs = filteredLogs.filter(log => log.level === levelValue);
+          }
+
+          // Apply search filter
+          if (searchValue) {
+            filteredLogs = filteredLogs.filter(log => log.raw.toLowerCase().includes(searchValue));
+          }
+
+          // Apply code filter
+          if (codeValue) {
+            filteredLogs = filteredLogs.filter(
+              log => log.errorCode && log.errorCode.includes(codeValue)
+            );
+          }
+
+          renderLogs(filteredLogs);
+          updateStats(logs.map(parseLogEntry));
+        }
+
+        // Render logs
+        function renderLogs(parsedLogs) {
+          if (parsedLogs.length === 0) {
+            logContainer.innerHTML = '<div class="no-logs">No logs found</div>';
+            return;
+          }
+
+          let html = parsedLogs
+            .map(log => {
+              let logHtml = `
                         <div class="log-entry ${log.level}">
                             <div class="timestamp">${log.timestamp}</div>
                             <div class="level">${log.level.toUpperCase()}</div>
                     `;
-                    
-                    if (log.errorCode) {
-                        logHtml += `<div class="error-code">${log.errorCode}</div>`;
-                    }
-                    
-                    if (log.httpStatus) {
-                        const statusClass = getStatusClass(log.httpStatus);
-                        logHtml += `<div class="http-status ${statusClass}">${log.httpStatus}</div>`;
-                    }
-                    
-                    logHtml += `<div class="message">${formatMessage(log.message)}</div>`;
-                    logHtml += `</div>`;
-                    
-                    return logHtml;
-                }).join('');
-                
-                logContainer.innerHTML = html;
-                
-                // Scroll to bottom for newest logs
-                logContainer.scrollTop = logContainer.scrollHeight;
+
+              if (log.errorCode) {
+                logHtml += `<div class="error-code">${log.errorCode}</div>`;
+              }
+
+              if (log.httpStatus) {
+                const statusClass = getStatusClass(log.httpStatus);
+                logHtml += `<div class="http-status ${statusClass}">${log.httpStatus}</div>`;
+              }
+
+              logHtml += `<div class="message">${formatMessage(log.message)}</div>`;
+              logHtml += `</div>`;
+
+              return logHtml;
+            })
+            .join('');
+
+          logContainer.innerHTML = html;
+
+          // Scroll to bottom for newest logs
+          logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        // Format message
+        function formatMessage(message) {
+          // Highlight objects that might have been stringified
+          message = message.replace(/(\{.*?\})/g, '<span style="color: #8e44ad;">$1</span>');
+
+          // Format error details
+          if (message.includes('stack')) {
+            const parts = message.split('stack:');
+            if (parts.length > 1) {
+              return `${parts[0]} <div class="error-details">${parts[1]}</div>`;
             }
-            
-            // Format message
-            function formatMessage(message) {
-                // Highlight objects that might have been stringified
-                message = message.replace(/(\{.*?\})/g, '<span style="color: #8e44ad;">$1</span>');
-                
-                // Format error details
-                if (message.includes('stack')) {
-                    const parts = message.split('stack:');
-                    if (parts.length > 1) {
-                        return `${parts[0]} <div class="error-details">${parts[1]}</div>`;
-                    }
-                }
-                
-                return message;
-            }
-            
-            // Get status class
-            function getStatusClass(status) {
-                const code = parseInt(status);
-                if (code >= 200 && code < 300) return 'success'; // 2xx Success
-                if (code >= 300 && code < 400) return 'redirect'; // 3xx Redirection
-                if (code >= 400 && code < 500) return 'client-error'; // 4xx Client Error
-                if (code >= 500) return 'server-error'; // 5xx Server Error
-                return '';
-            }
-            
-            // Update stats
-            function updateStats(allLogs) {
-                const counts = {
-                    info: 0,
-                    warn: 0,
-                    error: 0,
-                    debug: 0
-                };
-                
-                if (Array.isArray(allLogs) && allLogs.length > 0) {
-                    allLogs.forEach(log => {
-                        if (counts[log.level] !== undefined) {
-                            counts[log.level]++;
-                        }
-                    });
-                }
-                
-                infoCount.textContent = counts.info;
-                warnCount.textContent = counts.warn;
-                errorCount.textContent = counts.error;
-                debugCount.textContent = counts.debug;
-                totalCount.textContent = allLogs.length || 0;
-            }
-            
-            // Event listeners
-            refreshButton.addEventListener('click', loadLogs);
-            clearButton.addEventListener('click', clearLogs);
-            levelFilter.addEventListener('change', applyFiltersAndRender);
-            searchFilter.addEventListener('input', applyFiltersAndRender);
-            codeFilter.addEventListener('input', applyFiltersAndRender);
-            
-            // Initial load
-            loadLogs();
-            
-            // Auto-refresh every 10 seconds
-            setInterval(loadLogs, 10000);
-        });
+          }
+
+          return message;
+        }
+
+        // Get status class
+        function getStatusClass(status) {
+          const code = parseInt(status);
+          if (code >= 200 && code < 300) return 'success'; // 2xx Success
+          if (code >= 300 && code < 400) return 'redirect'; // 3xx Redirection
+          if (code >= 400 && code < 500) return 'client-error'; // 4xx Client Error
+          if (code >= 500) return 'server-error'; // 5xx Server Error
+          return '';
+        }
+
+        // Update stats
+        function updateStats(allLogs) {
+          const counts = {
+            info: 0,
+            warn: 0,
+            error: 0,
+            debug: 0,
+          };
+
+          if (Array.isArray(allLogs) && allLogs.length > 0) {
+            allLogs.forEach(log => {
+              if (counts[log.level] !== undefined) {
+                counts[log.level]++;
+              }
+            });
+          }
+
+          infoCount.textContent = counts.info;
+          warnCount.textContent = counts.warn;
+          errorCount.textContent = counts.error;
+          debugCount.textContent = counts.debug;
+          totalCount.textContent = allLogs.length || 0;
+        }
+
+        // Event listeners
+        refreshButton.addEventListener('click', loadLogs);
+        clearButton.addEventListener('click', clearLogs);
+        levelFilter.addEventListener('change', applyFiltersAndRender);
+        searchFilter.addEventListener('input', applyFiltersAndRender);
+        codeFilter.addEventListener('input', applyFiltersAndRender);
+
+        // Initial load
+        loadLogs();
+
+        // Auto-refresh every 10 seconds
+        setInterval(loadLogs, 10000);
+      });
     </script>
-</body>
+  </body>
 </html>

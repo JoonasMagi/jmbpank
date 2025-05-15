@@ -1,135 +1,135 @@
 /* Logs Panel Styles */
 #logs-panel {
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    right: 0;
-    width: 80%;
-    max-width: 1000px;
-    background-color: #1e1e1e;
-    color: #f0f0f0;
-    z-index: 1000;
-    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.5);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    transition: transform 0.3s ease-in-out;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 80%;
+  max-width: 1000px;
+  background-color: #1e1e1e;
+  color: #f0f0f0;
+  z-index: 1000;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: transform 0.3s ease-in-out;
 }
 
 #logs-panel.hidden {
-    transform: translateX(100%);
+  transform: translateX(100%);
 }
 
 .logs-header {
-    background-color: #2c2c2c;
-    padding: 0.5rem 1rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #444;
+  background-color: #2c2c2c;
+  padding: 0.5rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #444;
 }
 
 .logs-header h2 {
-    margin: 0;
-    font-size: 1.2rem;
-    color: #fff;
+  margin: 0;
+  font-size: 1.2rem;
+  color: #fff;
 }
 
 #close-logs-btn {
-    background: none;
-    border: none;
-    color: #f0f0f0;
-    font-size: 1.5rem;
-    cursor: pointer;
+  background: none;
+  border: none;
+  color: #f0f0f0;
+  font-size: 1.5rem;
+  cursor: pointer;
 }
 
 #close-logs-btn:hover {
-    color: #fff;
+  color: #fff;
 }
 
 #log-files {
-    background-color: #252525;
-    padding: 0.5rem 1rem;
-    border-bottom: 1px solid #444;
+  background-color: #252525;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid #444;
 }
 
 .log-file-selector {
-    background-color: #333;
-    color: #fff;
-    border: 1px solid #555;
-    padding: 0.3rem 0.5rem;
-    border-radius: 4px;
-    width: 100%;
+  background-color: #333;
+  color: #fff;
+  border: 1px solid #555;
+  padding: 0.3rem 0.5rem;
+  border-radius: 4px;
+  width: 100%;
 }
 
 #logs-container {
-    flex: 1;
-    overflow: auto;
-    padding: 0;
+  flex: 1;
+  overflow: auto;
+  padding: 0;
 }
 
 .log-display {
-    overflow: auto;
-    width: 100%;
-    height: 100%;
+  overflow: auto;
+  width: 100%;
+  height: 100%;
 }
 
 .logs-content {
-    margin: 0;
-    padding: 0.5rem;
-    font-family: 'Courier New', monospace;
-    font-size: 0.85rem;
-    line-height: 1.4;
+  margin: 0;
+  padding: 0.5rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+  line-height: 1.4;
 }
 
 .log-line {
-    display: flex;
-    white-space: nowrap;
+  display: flex;
+  white-space: nowrap;
 }
 
 .line-number {
-    display: inline-block;
-    width: 3rem;
-    text-align: right;
-    padding-right: 0.5rem;
-    color: #6a9955;
-    border-right: 1px solid #444;
-    user-select: none;
+  display: inline-block;
+  width: 3rem;
+  text-align: right;
+  padding-right: 0.5rem;
+  color: #6a9955;
+  border-right: 1px solid #444;
+  user-select: none;
 }
 
 .line-content {
-    padding-left: 0.5rem;
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
-    width: 100%;
+  padding-left: 0.5rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  width: 100%;
 }
 
 /* Log level styling */
 .error-log {
-    color: #f14c4c;
+  color: #f14c4c;
 }
 
 .warn-log {
-    color: #e6db74;
+  color: #e6db74;
 }
 
 .info-log {
-    color: #66d9ef;
+  color: #66d9ef;
 }
 
 .log-controls {
-    background-color: #252525;
-    padding: 0.5rem 1rem;
-    border-top: 1px solid #444;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+  background-color: #252525;
+  padding: 0.5rem 1rem;
+  border-top: 1px solid #444;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .line-count-select {
-    background-color: #333;
-    color: #fff;
-    border: 1px solid #555;
-    padding: 0.3rem 0.5rem;
-    border-radius: 4px;
+  background-color: #333;
+  color: #fff;
+  border: 1px solid #555;
+  padding: 0.3rem 0.5rem;
+  border-radius: 4px;
 }

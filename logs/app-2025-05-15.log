@@ -1,0 +1,43 @@
+[2025-05-15T19:30:49.662Z] INFO: Database initialization started
+[2025-05-15T19:30:49.664Z] INFO: JMB Pank application starting up
+[2025-05-15T19:30:49.664Z] INFO: Environment: development
+[2025-05-15T19:30:49.782Z] INFO: Central Bank Service initialized in TEST mode
+[2025-05-15T19:30:49.782Z] INFO: Using Central Bank URL: https://henno.cfd/central-bank
+[2025-05-15T19:30:49.809Z] INFO: Test routes enabled - FOR DEVELOPMENT USE ONLY
+[2025-05-15T19:30:49.809Z] INFO: Application initialization completed
+[2025-05-15T19:30:49.809Z] WARN: This is a test warning message
+[2025-05-15T19:30:49.809Z] ERROR: This is a test error message - Test error
+[2025-05-15T19:30:49.809Z] DEBUG: This is a debug message with details about the environment
+[2025-05-15T19:30:49.812Z] INFO: JMB Pank server running on port 3000
+[2025-05-15T19:30:49.812Z] INFO: API Documentation available at http://localhost:3000/api/docs
+[2025-05-15T19:30:49.812Z] INFO: JWKS available at http://localhost:3000/api/transactions/jwks
+[2025-05-15T19:30:49.813Z] INFO: Connected to SQLite database
+[2025-05-15T19:30:49.817Z] INFO: Database tables created successfully
+[2025-05-15T19:30:50.671Z] INFO: Database tables created successfully
+[2025-05-15T19:30:50.673Z] INFO: Key 1 already exists, using existing key
+[2025-05-15T19:30:51.813Z] INFO: Sample transaction processed: transfer of €1000 from account JMB123 to account JMB456
+[2025-05-15T19:30:51.813Z] INFO: User johndoe logged in successfully
+[2025-05-15T19:30:51.813Z] WARN: Failed login attempt for user testuser - Invalid credentials
+[2025-05-15T19:30:51.813Z] ERROR: Transaction failed - Insufficient funds
+[2025-05-15T19:37:40.287Z] INFO: Database initialization started
+[2025-05-15T19:37:40.290Z] INFO: JMB Pank application starting up
+[2025-05-15T19:37:40.290Z] INFO: Environment: development
+[2025-05-15T19:37:40.345Z] INFO: Generating new RSA key pair with ID 1
+[2025-05-15T19:37:40.443Z] INFO: RSA key pair generated and stored in memory successfully
+[2025-05-15T19:37:40.476Z] INFO: Central Bank Service initialized in TEST mode
+[2025-05-15T19:37:40.476Z] INFO: Using Central Bank URL: https://henno.cfd/central-bank
+[2025-05-15T19:37:40.503Z] INFO: Test routes enabled - FOR DEVELOPMENT USE ONLY
+[2025-05-15T19:37:40.503Z] INFO: Application initialization completed
+[2025-05-15T19:37:40.503Z] WARN: This is a test warning message
+[2025-05-15T19:37:40.503Z] ERROR: This is a test error message - Test error
+[2025-05-15T19:37:40.503Z] DEBUG: This is a debug message with details about the environment
+[2025-05-15T19:37:40.505Z] INFO: JMB Pank server running on port 3000
+[2025-05-15T19:37:40.506Z] INFO: API Documentation available at http://localhost:3000/api/docs
+[2025-05-15T19:37:40.506Z] INFO: JWKS available at http://localhost:3000/api/transactions/jwks
+[2025-05-15T19:37:40.506Z] INFO: RSA key pair generated and stored in memory successfully
+[2025-05-15T19:37:40.506Z] INFO: Connected to SQLite database
+[2025-05-15T19:37:40.507Z] INFO: Database tables created successfully
+[2025-05-15T19:37:42.507Z] INFO: Sample transaction processed: transfer of €1000 from account JMB123 to account JMB456
+[2025-05-15T19:37:42.508Z] INFO: User johndoe logged in successfully
+[2025-05-15T19:37:42.508Z] WARN: Failed login attempt for user testuser - Invalid credentials
+[2025-05-15T19:37:42.508Z] ERROR: Transaction failed - Insufficient funds

@@ -6,8 +6,10 @@ class CentralBankService {
     this.baseUrl = process.env.CENTRAL_BANK_URL || 'https://henno.cfd/central-bank';
     this.apiKey = process.env.API_KEY || '';
     this.testMode = process.env.TEST_MODE === 'true';
-    
-    console.log(`Central Bank Service initialized in ${this.testMode ? 'TEST' : 'PRODUCTION'} mode`);
+
+    console.log(
+      `Central Bank Service initialized in ${this.testMode ? 'TEST' : 'PRODUCTION'} mode`
+    );
     console.log(`Using Central Bank URL: ${this.baseUrl}`);
   }
 
@@ -19,7 +21,7 @@ class CentralBankService {
   async getBankInfo(bankPrefix) {
     try {
       console.log(`Getting bank info for prefix: ${bankPrefix}`);
-      
+
       if (this.testMode) {
         console.log('TEST MODE: Returning mock bank info');
         return this._mockGetBankInfo(bankPrefix);
@@ -27,8 +29,8 @@ class CentralBankService {
 
       const response = await axios.get(`${this.baseUrl}/banks`, {
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`
-        }
+          Authorization: `Bearer ${this.apiKey}`,
+        },
       });
 
       console.log(`Bank info received:`, response.data);
@@ -58,7 +60,7 @@ class CentralBankService {
       // Get destination bank info based on first 3 chars of accountTo
       const bankPrefix = transaction.accountTo.substring(0, 3);
       console.log(`Sending transaction to bank: ${bankPrefix}`);
-      
+
       const bankInfo = await this.getBankInfo(bankPrefix);
       console.log(`Got bank info:`, bankInfo);
 
@@ -69,7 +71,7 @@ class CentralBankService {
         currency: transaction.currency,
         amount: transaction.amount,
         explanation: transaction.explanation,
-        senderName: transaction.senderName
+        senderName: transaction.senderName,
       };
 
       console.log(`Payload to sign:`, payload);
@@ -83,10 +85,10 @@ class CentralBankService {
 
       // Log real transaction attempt
       console.log(`Sending real transaction to: ${bankInfo.transactionUrl}`);
-      
+
       // Send to destination bank
       const response = await axios.post(bankInfo.transactionUrl, {
-        jwt: token
+        jwt: token,
       });
 
       console.log(`Transaction response:`, response.data);
@@ -114,7 +116,7 @@ class CentralBankService {
   async verifyBank(bankPrefix) {
     try {
       console.log(`Verifying bank: ${bankPrefix}`);
-      
+
       if (this.testMode) {
         console.log('TEST MODE: Simulating bank verification');
         return this._mockVerifyBank(bankPrefix);
@@ -122,8 +124,8 @@ class CentralBankService {
 
       const response = await axios.get(`${this.baseUrl}/banks/${bankPrefix}/verify`, {
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`
-        }
+          Authorization: `Bearer ${this.apiKey}`,
+        },
       });
 
       console.log(`Bank verification response:`, response.data);
@@ -145,7 +147,7 @@ class CentralBankService {
   async getJwks(bankPrefix) {
     try {
       console.log(`Getting JWKS for bank: ${bankPrefix}`);
-      
+
       const bankInfo = await this.getBankInfo(bankPrefix);
       console.log(`JWKS URL:`, bankInfo.jwksUrl);
 
@@ -174,23 +176,21 @@ class CentralBankService {
       prefix: bankPrefix,
       name: `${bankPrefix} Test Bank`,
       transactionUrl: 'http://localhost:3000/api/transactions/b2b',
-      jwksUrl: 'http://localhost:3000/api/transactions/jwks'
+      jwksUrl: 'http://localhost:3000/api/transactions/jwks',
     };
   }
 
   _mockSendTransaction(bankInfo, token) {
     // Decode token to simulate processing
     console.log(`Mock sending transaction to: ${bankInfo.name}`);
-    const payload = JSON.parse(
-      Buffer.from(token.split('.')[1], 'base64').toString()
-    );
-    
+    const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+
     console.log(`Mock transaction payload:`, payload);
 
     // Return mock response
     return {
       receiverName: 'Test Receiver',
-      message: 'Transaction processed in test mode'
+      message: 'Transaction processed in test mode',
     };
   }
 

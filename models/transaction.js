@@ -17,7 +17,7 @@ class Transaction {
       explanation = '',
       senderName,
       receiverName = null,
-      status = 'pending'
+      status = 'pending',
     } = data;
 
     const transactionId = uuidv4();
@@ -43,7 +43,7 @@ class Transaction {
         explanation,
         senderName,
         receiverName,
-        status
+        status,
       ]
     );
 
@@ -61,7 +61,9 @@ class Transaction {
    */
   static async getByTransactionId(transactionId) {
     try {
-      const transaction = await get('SELECT * FROM transactions WHERE transaction_id = ?', [transactionId]);
+      const transaction = await get('SELECT * FROM transactions WHERE transaction_id = ?', [
+        transactionId,
+      ]);
       return transaction || null;
     } catch (error) {
       throw error;
@@ -96,15 +98,15 @@ class Transaction {
     try {
       const params = [status];
       let sql = 'UPDATE transactions SET status = ?';
-      
+
       if (receiverName) {
         sql += ', receiver_name = ?';
         params.push(receiverName);
       }
-      
+
       sql += ' WHERE transaction_id = ?';
       params.push(transactionId);
-      
+
       const result = await run(sql, params);
       return result.changes > 0;
     } catch (error) {
@@ -122,24 +124,31 @@ class Transaction {
    * @param {string} senderName - Name of the sender
    * @returns {Promise<Object>} Completed transaction
    */
-  static async executeLocalTransaction(fromAccount, toAccount, amount, currency, explanation, senderName) {
+  static async executeLocalTransaction(
+    fromAccount,
+    toAccount,
+    amount,
+    currency,
+    explanation,
+    senderName
+  ) {
     try {
       // Verify sender account and sufficient funds
       const senderAccount = await Account.getByAccountNumber(fromAccount);
       if (!senderAccount) {
         throw new Error('Sender account not found');
       }
-      
+
       if (senderAccount.balance < amount) {
         throw new Error('Insufficient funds');
       }
-      
+
       // Verify receiver account
       const receiverAccount = await Account.getByAccountNumber(toAccount);
       if (!receiverAccount) {
         throw new Error('Receiver account not found');
       }
-      
+
       // Create transaction record
       const transaction = await this.create({
         accountFrom: fromAccount,
@@ -149,16 +158,16 @@ class Transaction {
         explanation,
         senderName,
         receiverName: receiverAccount.owner_name,
-        status: 'processing'
+        status: 'processing',
       });
-      
+
       // Update account balances
       await Account.updateBalance(fromAccount, -amount);
       await Account.updateBalance(toAccount, amount);
-      
+
       // Update transaction status
       await this.updateStatus(transaction.transaction_id, 'completed', receiverAccount.owner_name);
-      
+
       // Return completed transaction
       return this.getByTransactionId(transaction.transaction_id);
     } catch (error) {

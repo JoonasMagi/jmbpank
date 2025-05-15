@@ -153,36 +153,39 @@ exports.getAccountTransactions = async (req, res) => {
 exports.createTransaction = async (req, res) => {
   try {
     const { accountFrom, accountTo, amount, currency, explanation, senderName } = req.body;
-    
+
     if (!accountFrom || !accountTo || !amount) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
-    
+
     if (amount <= 0) {
       return res.status(400).json({ error: 'Amount must be positive' });
     }
-    
+
     const result = await TransactionService.processOutgoingB2BTransaction({
       accountFrom,
       accountTo,
       amount,
       currency,
       explanation,
-      senderName
+      senderName,
     });
-    
+
     res.status(201).json(result);
   } catch (error) {
     console.error('Error creating transaction:', error);
-    
-    if (error.message === 'Sender account not found' || error.message === 'Receiver account not found') {
+
+    if (
+      error.message === 'Sender account not found' ||
+      error.message === 'Receiver account not found'
+    ) {
       return res.status(404).json({ error: error.message });
     }
-    
+
     if (error.message === 'Insufficient funds') {
       return res.status(402).json({ error: error.message });
     }
-    
+
     res.status(500).json({ error: 'Failed to process transaction' });
   }
 };
@@ -231,24 +234,24 @@ exports.createTransaction = async (req, res) => {
 exports.processB2BTransaction = async (req, res) => {
   try {
     const { jwt } = req.body;
-    
+
     if (!jwt) {
       return res.status(400).json({ error: 'JWT is required' });
     }
-    
+
     const result = await TransactionService.processIncomingB2BTransaction(jwt);
     res.json(result);
   } catch (error) {
     console.error('Error processing B2B transaction:', error);
-    
+
     if (error.message === 'Receiver account not found') {
       return res.status(404).json({ error: error.message });
     }
-    
+
     if (error.message.includes('Invalid JWT')) {
       return res.status(400).json({ error: error.message });
     }
-    
+
     res.status(500).json({ error: 'Failed to process B2B transaction' });
   }
 };

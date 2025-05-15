@@ -38,27 +38,27 @@ exports.getLogs = async (req, res) => {
     if (!req.user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-    
+
     // Number of lines to retrieve (default: 100)
     const lines = parseInt(req.query.lines) || 100;
-    
+
     // Get available log files
     const logFiles = getLogFiles();
-    
+
     if (logFiles.length === 0) {
       return res.json({ logs: ['No log files found'] });
     }
-    
+
     // Get latest log file
     const latestLogFile = logFiles[0];
-    
+
     // Read log content
     const logContent = readLogFile(latestLogFile, lines);
-    
-    res.json({ 
+
+    res.json({
       logs: logContent,
       file: path.basename(latestLogFile),
-      available_files: logFiles.map(file => path.basename(file))
+      available_files: logFiles.map(file => path.basename(file)),
     });
   } catch (error) {
     console.error('Error retrieving logs:', error);
@@ -111,26 +111,26 @@ exports.getLogFile = async (req, res) => {
     if (!req.user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-    
+
     const filename = req.params.filename;
     const lines = parseInt(req.query.lines) || 100;
-    
+
     // Get available log files
     const logFiles = getLogFiles();
-    
+
     // Find the requested log file
     const logFile = logFiles.find(file => path.basename(file) === filename);
-    
+
     if (!logFile) {
       return res.status(404).json({ error: 'Log file not found' });
     }
-    
+
     // Read log content
     const logContent = readLogFile(logFile, lines);
-    
-    res.json({ 
+
+    res.json({
       logs: logContent,
-      file: path.basename(logFile)
+      file: path.basename(logFile),
     });
   } catch (error) {
     console.error('Error retrieving log file:', error);
@@ -146,23 +146,24 @@ function getLogFiles() {
   try {
     // Default log directory
     const logDir = process.env.LOG_DIR || path.join(__dirname, '../logs');
-    
+
     // Create logs directory if it doesn't exist
     if (!fs.existsSync(logDir)) {
       fs.mkdirSync(logDir, { recursive: true });
       return [];
     }
-    
+
     // Get all log files
-    const files = fs.readdirSync(logDir)
+    const files = fs
+      .readdirSync(logDir)
       .filter(file => file.endsWith('.log'))
       .map(file => path.join(logDir, file));
-    
+
     // Sort by modification time (newest first)
     files.sort((a, b) => {
       return fs.statSync(b).mtime.getTime() - fs.statSync(a).mtime.getTime();
     });
-    
+
     return files;
   } catch (error) {
     console.error('Error getting log files:', error);
@@ -182,10 +183,10 @@ function readLogFile(filePath, linesCount) {
     if (!fs.existsSync(filePath)) {
       return [`Log file not found: ${filePath}`];
     }
-    
+
     // Read file content
     const fileContent = fs.readFileSync(filePath, 'utf8');
-    
+
     // Split into lines and get the last N lines
     const lines = fileContent.split('\n');
     return lines.filter(Boolean).slice(-linesCount);

@@ -7,11 +7,11 @@ async function testCentralBank() {
   try {
     console.log('Testing connection to Central Bank...');
     console.log(`URL: ${CENTRAL_BANK_URL}`);
-    
+
     // Try to get banks list (this will likely return 401 without API key, which is expected)
     try {
       const response = await axios.get(`${CENTRAL_BANK_URL}/banks`, {
-        timeout: 5000 // 5 second timeout
+        timeout: 5000, // 5 second timeout
       });
       console.log(`SUCCESS! Status: ${response.status}`);
       console.log(`Response data:`, response.data);
@@ -19,10 +19,12 @@ async function testCentralBank() {
       if (error.response) {
         // The request was made and the server responded with a status code
         console.log(`Status: ${error.response.status}`);
-        
+
         // If we get a 401 Unauthorized, that means the URL itself is valid but we need an API key
         if (error.response.status === 401) {
-          console.log('✅ URL is valid! 401 Unauthorized means the URL is correct but requires an API key');
+          console.log(
+            '✅ URL is valid! 401 Unauthorized means the URL is correct but requires an API key'
+          );
         } else {
           console.log('❌ Unexpected status code:', error.response.status);
         }
@@ -32,12 +34,12 @@ async function testCentralBank() {
         console.log('❌ Error:', error.message);
       }
     }
-    
+
     // Try to access the docs or homepage if available
     console.log('\nAttempting to access documentation or homepage...');
     try {
       const response = await axios.get(CENTRAL_BANK_URL, {
-        timeout: 5000
+        timeout: 5000,
       });
       console.log(`✅ Homepage is accessible! Status: ${response.status}`);
     } catch (error) {

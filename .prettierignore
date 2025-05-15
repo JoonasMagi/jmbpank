@@ -1,0 +1,25 @@
+# Dependencies
+node_modules
+package-lock.json
+
+# Build output
+dist
+build
+
+# Data files
+data
+
+# Logs
+logs
+
+# Environment variables
+.env
+.env.*
+
+# IDE files
+.idea
+.vscode
+
+# Other
+README.md
+LICENSE

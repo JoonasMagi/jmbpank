@@ -12,22 +12,33 @@ class Account {
    * @param {number} params.initialBalance - Initial balance (default: 0)
    * @returns {Promise<Object>} Created account
    */
-  static async create({ userId, ownerName, accountType = 'checking', currency = 'EUR', initialBalance = 0 }) {
-    // Generate account number with bank prefix
-    const bankPrefix = process.env.BANK_PREFIX || 'JMB';
+  static async create({
+    userId,
+    ownerName,
+    accountType = 'checking',
+    currency = 'EUR',
+    initialBalance = 0,
+  }) {
+    // Generate account number with bank prefix from environment variable
+    if (!process.env.BANK_PREFIX) {
+      throw new Error(
+        'BANK_PREFIX environment variable is not set. Please set it in your .env file.'
+      );
+    }
+    const bankPrefix = process.env.BANK_PREFIX;
     // Use first 3 chars of UUID (no dashes) and add a random 6 digits
     const accountNumber = `${bankPrefix}${uuidv4().replace(/-/g, '').substring(0, 20)}`;
-    
+
     try {
       const result = await run(
         'INSERT INTO accounts (account_number, user_id, owner_name, account_type, balance, currency) VALUES (?, ?, ?, ?, ?, ?)',
         [accountNumber, userId, ownerName, accountType, initialBalance, currency]
       );
-      
+
       if (result.lastID) {
         return this.getByAccountNumber(accountNumber);
       }
-      
+
       throw new Error('Failed to create account');
     } catch (error) {
       throw error;
@@ -88,21 +99,21 @@ class Account {
       if (!account) {
         throw new Error('Account not found');
       }
-      
+
       // Calculate new balance
       const newBalance = account.balance + amount;
-      
+
       // Don't allow negative balance
       if (newBalance < 0) {
         throw new Error('Insufficient funds');
       }
-      
+
       // Update balance
-      const result = await run(
-        'UPDATE accounts SET balance = ? WHERE account_number = ?',
-        [newBalance, accountNumber]
-      );
-      
+      const result = await run('UPDATE accounts SET balance = ? WHERE account_number = ?', [
+        newBalance,
+        accountNumber,
+      ]);
+
       return result.changes > 0;
     } catch (error) {
       throw error;
@@ -121,7 +132,7 @@ class Account {
       if (!account) {
         return false;
       }
-      
+
       return account.balance >= amount;
     } catch (error) {
       throw error;

@@ -6,7 +6,10 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "format": "prettier --write \"**/*.{js,json,css,html}\"",
+    "format:check": "prettier --check \"**/*.{js,json,css,html}\"",
+    "prepare": "husky"
   },
   "repository": {
     "type": "git",
@@ -37,6 +40,14 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1"
+    "husky": "^9.1.7",
+    "lint-staged": "^16.0.0",
+    "nodemon": "^3.0.1",
+    "prettier": "^3.2.5"
+  },
+  "lint-staged": {
+    "**/*.{js,json,css,html}": [
+      "prettier --write"
+    ]
   }
 }
