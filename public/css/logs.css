@@ -133,3 +133,92 @@
   padding: 0.3rem 0.5rem;
   border-radius: 4px;
 }
+
+/* HTTP Logs Table Styles */
+.http-log-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+  color: #f0f0f0;
+}
+
+.http-log-table thead {
+  background-color: #2c2c2c;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.http-log-table th {
+  padding: 0.5rem;
+  text-align: left;
+  border-bottom: 2px solid #444;
+  font-weight: bold;
+}
+
+.http-log-table td {
+  padding: 0.5rem;
+  border-bottom: 1px solid #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 300px;
+}
+
+.http-log-table .url {
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.http-log-table tr:hover {
+  background-color: #2a2a2a;
+}
+
+.request-row {
+  border-left: 3px solid #4a9eff;
+}
+
+.response-row {
+  border-left: 3px solid #66d9ef;
+}
+
+.log-type.request {
+  color: #4a9eff;
+  font-weight: bold;
+}
+
+.log-type.response {
+  color: #66d9ef;
+  font-weight: bold;
+}
+
+/* Status code colors */
+.status-success {
+  color: #6a9955;
+  font-weight: bold;
+}
+
+.status-redirect {
+  color: #e6db74;
+  font-weight: bold;
+}
+
+.status-client-error {
+  color: #f14c4c;
+  font-weight: bold;
+}
+
+.status-server-error {
+  color: #ff6b6b;
+  font-weight: bold;
+}
+
+.has-details {
+  cursor: pointer;
+}
+
+.has-details:hover {
+  background-color: #3a3a3a;
+}

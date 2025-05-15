@@ -130,6 +130,64 @@ app.use(express.static(path.join(__dirname, 'public')));
 directLog('JMB Pank application starting up');
 directLog(`Environment: ${process.env.NODE_ENV}`);
 
+// Check for bank prefix changes and update account numbers if needed
+const Account = require('./models/account');
+
+// Function to check and handle bank prefix changes
+async function checkBankPrefixChange() {
+  try {
+    // Path to store the last used bank prefix
+    const prefixFilePath = path.join(__dirname, 'data', 'last_bank_prefix.txt');
+    const currentPrefix = process.env.BANK_PREFIX;
+
+    if (!currentPrefix) {
+      directLog('WARNING: BANK_PREFIX environment variable is not set');
+      return;
+    }
+
+    // Check if the prefix file exists
+    let lastPrefix = null;
+    if (fs.existsSync(prefixFilePath)) {
+      lastPrefix = fs.readFileSync(prefixFilePath, 'utf8').trim();
+      directLog(`Last used bank prefix: ${lastPrefix}`);
+    } else {
+      directLog('No previous bank prefix found, creating new prefix file');
+      fs.writeFileSync(prefixFilePath, currentPrefix);
+      return;
+    }
+
+    // If the prefix has changed, update all account numbers
+    if (lastPrefix && lastPrefix !== currentPrefix) {
+      directLog(`Bank prefix has changed from ${lastPrefix} to ${currentPrefix}`);
+
+      // Update all account numbers with the new prefix
+      const updatedCount = await Account.updateBankPrefix(lastPrefix, currentPrefix);
+      directLog(`Updated ${updatedCount} account numbers with new bank prefix`);
+
+      // Update the prefix file with the new prefix
+      fs.writeFileSync(prefixFilePath, currentPrefix);
+      directLog(`Bank prefix file updated to ${currentPrefix}`);
+    } else {
+      directLog(`Bank prefix unchanged: ${currentPrefix}`);
+    }
+  } catch (error) {
+    const timestamp = new Date().toISOString();
+    const logMessage = `[${timestamp}] ERROR: Failed to check/update bank prefix: ${error.message}`;
+    originalConsoleError(logMessage);
+    logStream.write(`${logMessage}\n${error.stack}\n`);
+  }
+}
+
+// Run the bank prefix check after database initialization
+setTimeout(() => {
+  checkBankPrefixChange().catch(err => {
+    const timestamp = new Date().toISOString();
+    const logMessage = `[${timestamp}] ERROR: Error in bank prefix check: ${err.message}`;
+    originalConsoleError(logMessage);
+    logStream.write(`${logMessage}\n${err.stack}\n`);
+  });
+}, 2000); // Delay to ensure database is ready
+
 // Initialize crypto service (generate NEW keys in memory on startup)
 try {
   const CryptoService = require('./services/cryptoService');

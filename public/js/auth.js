@@ -61,7 +61,16 @@ const Auth = (() => {
         console.log('Registration response:', data);
       }
 
-      // If status is in 2xx range, consider it a success even if there are minor issues
+      // Special case for 201 Created status
+      if (response.status === 201) {
+        console.log('Registration successful with status 201 Created');
+        return {
+          success: true,
+          user: data,
+        };
+      }
+
+      // Other 2xx status codes
       if (response.status >= 200 && response.status < 300) {
         console.log('Registration successful with status:', response.status);
         return {
@@ -70,10 +79,24 @@ const Auth = (() => {
         };
       }
 
-      // Otherwise, handle as error
+      // Special case for username/email already exists (status 400)
+      if (response.status === 400 && data.code) {
+        // Check for specific error codes
+        if (data.code === 'USER_001' || data.code === 'USER_002' || data.code === 'USER_003') {
+          console.log('Registration failed due to constraint violation:', data.error);
+          throw new Error(data.error || 'Username or email already exists');
+        }
+      }
+
+      // Otherwise, handle as general error
       throw new Error(data.error || 'Registration failed');
     } catch (error) {
       console.error('Registration error:', error);
+      console.log('Full error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+      });
       return {
         success: false,
         error: error.message,

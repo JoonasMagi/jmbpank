@@ -138,6 +138,53 @@ class Account {
       throw error;
     }
   }
+
+  /**
+   * Update all account numbers when bank prefix changes
+   * @param {string} oldPrefix - The old bank prefix
+   * @param {string} newPrefix - The new bank prefix
+   * @returns {Promise<number>} Number of accounts updated
+   */
+  static async updateBankPrefix(oldPrefix, newPrefix) {
+    try {
+      console.log(`Updating account numbers from prefix ${oldPrefix} to ${newPrefix}`);
+
+      // Get all accounts with the old prefix
+      const accounts = await query('SELECT * FROM accounts WHERE account_number LIKE ?', [
+        `${oldPrefix}%`,
+      ]);
+
+      if (!accounts || accounts.length === 0) {
+        console.log(`No accounts found with prefix ${oldPrefix}`);
+        return 0;
+      }
+
+      console.log(`Found ${accounts.length} accounts to update`);
+
+      // Update each account
+      let updatedCount = 0;
+      for (const account of accounts) {
+        // Replace only the prefix part, keeping the rest of the account number the same
+        const newAccountNumber = newPrefix + account.account_number.substring(oldPrefix.length);
+
+        const result = await run('UPDATE accounts SET account_number = ? WHERE id = ?', [
+          newAccountNumber,
+          account.id,
+        ]);
+
+        if (result.changes > 0) {
+          updatedCount++;
+          console.log(`Updated account ${account.account_number} to ${newAccountNumber}`);
+        }
+      }
+
+      console.log(`Successfully updated ${updatedCount} accounts`);
+      return updatedCount;
+    } catch (error) {
+      console.error('Error updating bank prefix:', error);
+      throw error;
+    }
+  }
 }
 
 module.exports = Account;

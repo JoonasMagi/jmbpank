@@ -1,4 +1,4 @@
-// Logs Module - Handles logs viewing functionality
+// Logs Module - Handles HTTP request/response logging functionality
 const Logs = (() => {
   // Store logs
   let logEntries = [];
@@ -15,7 +15,7 @@ const Logs = (() => {
       const logsContainer = document.getElementById('logs-container');
       if (!logsContainer) return;
 
-      logsContainer.innerHTML = '<div class="loading">Loading logs...</div>';
+      logsContainer.innerHTML = '<div class="loading">Loading HTTP logs...</div>';
 
       const response = await fetch(`/api/logs?lines=${lines}`, {
         headers: {
@@ -32,7 +32,7 @@ const Logs = (() => {
       currentLogFile = data.file;
       availableLogFiles = data.available_files || [];
 
-      renderLogs();
+      renderHttpLogs();
       return data;
     } catch (error) {
       console.error('Error loading logs:', error);
@@ -54,7 +54,7 @@ const Logs = (() => {
       const logsContainer = document.getElementById('logs-container');
       if (!logsContainer) return;
 
-      logsContainer.innerHTML = '<div class="loading">Loading log file...</div>';
+      logsContainer.innerHTML = '<div class="loading">Loading HTTP logs...</div>';
 
       const response = await fetch(`/api/logs/${filename}?lines=${lines}`, {
         headers: {
@@ -70,7 +70,7 @@ const Logs = (() => {
       logEntries = data.logs;
       currentLogFile = data.file;
 
-      renderLogs();
+      renderHttpLogs();
       return data;
     } catch (error) {
       console.error('Error loading log file:', error);
@@ -82,8 +82,8 @@ const Logs = (() => {
     }
   };
 
-  // Render logs to the DOM
-  const renderLogs = () => {
+  // Render HTTP logs to the DOM
+  const renderHttpLogs = () => {
     const logsContainer = document.getElementById('logs-container');
     if (!logsContainer) return;
 
@@ -111,8 +111,28 @@ const Logs = (() => {
       logFiles.appendChild(fileSelector);
     }
 
-    if (logEntries.length === 0) {
-      logsContainer.innerHTML = '<div class="loading">No logs found.</div>';
+    // Make sure logEntries is an array before filtering
+    if (!Array.isArray(logEntries) || logEntries.length === 0) {
+      logsContainer.innerHTML = '<div class="loading">No logs found. Try refreshing.</div>';
+      return;
+    }
+
+    // Filter logs to only include HTTP requests and responses
+    const httpLogs = logEntries.filter(log => {
+      // Make sure log is a string before using includes
+      if (typeof log !== 'string') return false;
+
+      return (
+        log.includes('REQUEST:') ||
+        log.includes('RESPONSE:') ||
+        log.includes('REQUEST BODY:') ||
+        log.includes('RESPONSE ERROR:')
+      );
+    });
+
+    if (httpLogs.length === 0) {
+      logsContainer.innerHTML =
+        '<div class="loading">No HTTP logs found. Try making some API requests.</div>';
       return;
     }
 
@@ -122,38 +142,170 @@ const Logs = (() => {
     const logDisplay = document.createElement('div');
     logDisplay.className = 'log-display';
 
-    const pre = document.createElement('pre');
-    pre.className = 'logs-content';
+    const httpLogTable = document.createElement('table');
+    httpLogTable.className = 'http-log-table';
 
-    // Add each log line with line numbers
-    logEntries.forEach((log, index) => {
-      const line = document.createElement('div');
-      line.className = 'log-line';
+    // Create table header
+    const tableHeader = document.createElement('thead');
+    tableHeader.innerHTML = `
+      <tr>
+        <th>Time</th>
+        <th>Type</th>
+        <th>Method</th>
+        <th>URL</th>
+        <th>Status</th>
+        <th>Details</th>
+      </tr>
+    `;
+    httpLogTable.appendChild(tableHeader);
 
-      const lineNumber = document.createElement('span');
-      lineNumber.className = 'line-number';
-      lineNumber.textContent = index + 1;
+    // Create table body
+    const tableBody = document.createElement('tbody');
 
-      const lineContent = document.createElement('span');
-      lineContent.className = 'line-content';
+    // Group related logs (request and response)
+    const logGroups = {};
 
-      // Apply syntax highlighting based on log level
-      if (log.includes(' ERROR ') || log.includes(' Error ')) {
-        lineContent.classList.add('error-log');
-      } else if (log.includes(' WARN ') || log.includes(' Warning ')) {
-        lineContent.classList.add('warn-log');
-      } else if (log.includes(' INFO ') || log.includes(' Information ')) {
-        lineContent.classList.add('info-log');
+    httpLogs.forEach(log => {
+      const timestamp = log.match(/\[(.*?)\]/)?.[1] || '';
+      const type = log.includes('REQUEST:')
+        ? 'REQUEST'
+        : log.includes('RESPONSE:')
+          ? 'RESPONSE'
+          : log.includes('REQUEST BODY:')
+            ? 'REQUEST BODY'
+            : 'RESPONSE ERROR';
+
+      // Extract method and URL
+      let method = '';
+      let url = '';
+      let status = '';
+      let details = '';
+
+      if (type === 'REQUEST' || type === 'RESPONSE') {
+        const methodMatch = log.match(/(?:REQUEST|RESPONSE): (\w+) (.*?)( - |$)/);
+        if (methodMatch) {
+          method = methodMatch[1];
+          url = methodMatch[2];
+        }
+
+        if (type === 'RESPONSE') {
+          const statusMatch = log.match(/Status: (\d+)/);
+          if (statusMatch) {
+            status = statusMatch[1];
+          }
+        }
+      } else if (type === 'REQUEST BODY' || type === 'RESPONSE ERROR') {
+        // Extract the JSON body if present
+        const bodyMatch = log.match(/(?:REQUEST BODY|RESPONSE ERROR): (.+)$/);
+        if (bodyMatch) {
+          details = bodyMatch[1];
+        }
       }
 
-      lineContent.textContent = log;
+      // Create a unique key for grouping related logs
+      const urlKey = url.split('?')[0]; // Remove query params for grouping
+      const timeKey = timestamp.split('.')[0]; // Remove milliseconds for grouping
+      const groupKey = `${timeKey}-${method}-${urlKey}`;
 
-      line.appendChild(lineNumber);
-      line.appendChild(lineContent);
-      pre.appendChild(line);
+      if (!logGroups[groupKey]) {
+        logGroups[groupKey] = {
+          timestamp,
+          requests: [],
+          responses: [],
+        };
+      }
+
+      if (type === 'REQUEST' || type === 'REQUEST BODY') {
+        logGroups[groupKey].requests.push({ type, method, url, details, raw: log });
+      } else {
+        logGroups[groupKey].responses.push({ type, method, url, status, details, raw: log });
+      }
     });
 
-    logDisplay.appendChild(pre);
+    // Sort log groups by timestamp (newest first)
+    const sortedGroups = Object.values(logGroups).sort(
+      (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
+    );
+
+    // Add rows for each log group
+    sortedGroups.forEach(group => {
+      // Request row
+      if (group.requests.length > 0) {
+        const request = group.requests[0];
+        const requestRow = document.createElement('tr');
+        requestRow.className = 'request-row';
+
+        const formattedTime = new Date(group.timestamp).toLocaleTimeString();
+
+        requestRow.innerHTML = `
+          <td>${formattedTime}</td>
+          <td class="log-type request">REQUEST</td>
+          <td>${request.method}</td>
+          <td class="url">${request.url}</td>
+          <td>-</td>
+          <td>${group.requests.length > 1 ? 'Has body' : ''}</td>
+        `;
+
+        // Add click event to show details
+        if (group.requests.length > 1) {
+          requestRow.addEventListener('click', () => {
+            // Find request body
+            const bodyRequest = group.requests.find(r => r.type === 'REQUEST BODY');
+            if (bodyRequest) {
+              alert(`Request Body:\n${bodyRequest.details}`);
+            }
+          });
+          requestRow.classList.add('has-details');
+        }
+
+        tableBody.appendChild(requestRow);
+      }
+
+      // Response row
+      if (group.responses.length > 0) {
+        const response = group.responses[0];
+        const responseRow = document.createElement('tr');
+        responseRow.className = 'response-row';
+
+        // Add status color class
+        let statusClass = '';
+        if (response.status) {
+          const statusNum = parseInt(response.status);
+          if (statusNum >= 200 && statusNum < 300) statusClass = 'status-success';
+          else if (statusNum >= 300 && statusNum < 400) statusClass = 'status-redirect';
+          else if (statusNum >= 400 && statusNum < 500) statusClass = 'status-client-error';
+          else if (statusNum >= 500) statusClass = 'status-server-error';
+        }
+
+        const formattedTime = new Date(group.timestamp).toLocaleTimeString();
+
+        responseRow.innerHTML = `
+          <td>${formattedTime}</td>
+          <td class="log-type response">RESPONSE</td>
+          <td>${response.method}</td>
+          <td class="url">${response.url}</td>
+          <td class="${statusClass}">${response.status || '-'}</td>
+          <td>${group.responses.length > 1 ? 'Has error details' : ''}</td>
+        `;
+
+        // Add click event to show details
+        if (group.responses.length > 1) {
+          responseRow.addEventListener('click', () => {
+            // Find response error details
+            const errorResponse = group.responses.find(r => r.type === 'RESPONSE ERROR');
+            if (errorResponse) {
+              alert(`Response Error:\n${errorResponse.details}`);
+            }
+          });
+          responseRow.classList.add('has-details');
+        }
+
+        tableBody.appendChild(responseRow);
+      }
+    });
+
+    httpLogTable.appendChild(tableBody);
+    logDisplay.appendChild(httpLogTable);
     logsContainer.appendChild(logDisplay);
 
     // Add log controls
@@ -173,7 +325,7 @@ const Logs = (() => {
 
     const lineCountSelect = document.createElement('select');
     lineCountSelect.className = 'line-count-select';
-    [50, 100, 200, 500, 1000].forEach(count => {
+    [100, 200, 500, 1000, 2000].forEach(count => {
       const option = document.createElement('option');
       option.value = count;
       option.textContent = `${count} lines`;
@@ -214,6 +366,7 @@ const Logs = (() => {
     // Logs button in header
     const logsBtn = document.getElementById('logs-btn');
     if (logsBtn) {
+      logsBtn.textContent = 'HTTP Logs'; // Update button text
       logsBtn.addEventListener('click', toggleLogsPanel);
     }
 

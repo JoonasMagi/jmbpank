@@ -41,3 +41,286 @@
 [2025-05-15T19:37:42.508Z] INFO: User johndoe logged in successfully
 [2025-05-15T19:37:42.508Z] WARN: Failed login attempt for user testuser - Invalid credentials
 [2025-05-15T19:37:42.508Z] ERROR: Transaction failed - Insufficient funds
+[2025-05-15T20:03:07.668Z] INFO: Database initialization started
+[2025-05-15T20:03:07.670Z] INFO: JMB Pank application starting up
+[2025-05-15T20:03:07.670Z] INFO: Environment: development
+[2025-05-15T20:03:07.730Z] INFO: Generating new RSA key pair with ID 1
+[2025-05-15T20:03:07.825Z] INFO: RSA key pair generated and stored in memory successfully
+[2025-05-15T20:03:07.853Z] INFO: Central Bank Service initialized in TEST mode
+[2025-05-15T20:03:07.853Z] INFO: Using Central Bank URL: https://henno.cfd/central-bank
+[2025-05-15T20:03:07.880Z] INFO: Test routes enabled - FOR DEVELOPMENT USE ONLY
+[2025-05-15T20:03:07.880Z] INFO: Application initialization completed
+[2025-05-15T20:03:07.880Z] WARN: This is a test warning message
+[2025-05-15T20:03:07.880Z] ERROR: This is a test error message - Test error
+[2025-05-15T20:03:07.880Z] DEBUG: This is a debug message with details about the environment
+[2025-05-15T20:03:07.882Z] INFO: JMB Pank server running on port 3000
+[2025-05-15T20:03:07.883Z] INFO: API Documentation available at http://localhost:3000/api/docs
+[2025-05-15T20:03:07.883Z] INFO: JWKS available at http://localhost:3000/api/transactions/jwks
+[2025-05-15T20:03:07.883Z] INFO: RSA key pair generated and stored in memory successfully
+[2025-05-15T20:03:07.884Z] INFO: Connected to SQLite database
+[2025-05-15T20:03:07.884Z] INFO: Database tables created successfully
+[2025-05-15T20:03:09.679Z] INFO: No previous bank prefix found, creating new prefix file
+[2025-05-15T20:03:09.895Z] INFO: Sample transaction processed: transfer of €1000 from account JMB123 to account JMB456
+[2025-05-15T20:03:09.895Z] INFO: User johndoe logged in successfully
+[2025-05-15T20:03:09.895Z] WARN: Failed login attempt for user testuser - Invalid credentials
+[2025-05-15T20:03:09.895Z] ERROR: Transaction failed - Insufficient funds
+[2025-05-15T20:09:07.284Z] INFO: Database initialization started
+[2025-05-15T20:09:07.286Z] INFO: JMB Pank application starting up
+[2025-05-15T20:09:07.286Z] INFO: Environment: development
+[2025-05-15T20:09:07.345Z] INFO: Generating new RSA key pair with ID 1
+[2025-05-15T20:09:07.429Z] INFO: RSA key pair generated and stored in memory successfully
+[2025-05-15T20:09:07.457Z] INFO: Central Bank Service initialized in TEST mode
+[2025-05-15T20:09:07.458Z] INFO: Using Central Bank URL: https://henno.cfd/central-bank
+[2025-05-15T20:09:07.484Z] INFO: Test routes enabled - FOR DEVELOPMENT USE ONLY
+[2025-05-15T20:09:07.484Z] INFO: Application initialization completed
+[2025-05-15T20:09:07.484Z] WARN: This is a test warning message
+[2025-05-15T20:09:07.484Z] ERROR: This is a test error message - Test error
+[2025-05-15T20:09:07.484Z] DEBUG: This is a debug message with details about the environment
+[2025-05-15T20:09:07.486Z] INFO: JMB Pank server running on port 3000
+[2025-05-15T20:09:07.487Z] INFO: API Documentation available at http://localhost:3000/api/docs
+[2025-05-15T20:09:07.487Z] INFO: JWKS available at http://localhost:3000/api/transactions/jwks
+[2025-05-15T20:09:07.487Z] INFO: RSA key pair generated and stored in memory successfully
+[2025-05-15T20:09:07.487Z] INFO: Connected to SQLite database
+[2025-05-15T20:09:07.488Z] INFO: Database tables created successfully
+[2025-05-15T20:09:09.293Z] INFO: Last used bank prefix: JMB
+[2025-05-15T20:09:09.294Z] INFO: Bank prefix unchanged: JMB
+[2025-05-15T20:09:09.490Z] INFO: Sample transaction processed: transfer of €1000 from account JMB123 to account JMB456
+[2025-05-15T20:09:09.490Z] INFO: User johndoe logged in successfully
+[2025-05-15T20:09:09.490Z] WARN: Failed login attempt for user testuser - Invalid credentials
+[2025-05-15T20:09:09.490Z] ERROR: Transaction failed - Insufficient funds
+[2025-05-15T20:09:53.174Z] REQUEST: GET /favicon.ico - User: anonymous
+[2025-05-15T20:10:48.875Z] INFO: Registration request received: {
+  "username": "jonjon",
+  "password": "12345678",
+  "fullName": "jon jon",
+  "email": "user@example.com"
+}
+[2025-05-15T20:10:48.875Z] INFO: Registration attempt for username: jonjon, email: user@example.com
+[2025-05-15T20:10:48.875Z] INFO: Creating user in database...
+[2025-05-15T20:10:48.876Z] ERROR: Database error during user creation: {
+  "message": "Username already exists",
+  "code": "USER_001",
+  "status": 400,
+  "details": {
+    "field": "username",
+    "value": "jonjon"
+  },
+  "originalError": null
+}
+[2025-05-15T20:10:48.876Z] ERROR: Registration failed [USER_001] Status: 400 - Username already exists
+[2025-05-15T20:10:55.369Z] INFO: Registration request received: {
+  "username": "jonjon1",
+  "password": "12345678",
+  "fullName": "jon jon",
+  "email": "user@example.com"
+}
+[2025-05-15T20:10:55.370Z] INFO: Registration attempt for username: jonjon1, email: user@example.com
+[2025-05-15T20:10:55.370Z] INFO: Creating user in database...
+[2025-05-15T20:10:55.374Z] ERROR: Database error during user creation: {
+  "message": "Failed to create user",
+  "code": "USER_004",
+  "status": 500,
+  "details": {
+    "operation": "database_insert"
+  },
+  "originalError": null
+}
+[2025-05-15T20:10:55.374Z] ERROR: Registration failed [USER_004] Status: 500 - Failed to create user
+[2025-05-15T20:12:56.617Z] INFO: Database initialization started
+[2025-05-15T20:12:56.619Z] INFO: JMB Pank application starting up
+[2025-05-15T20:12:56.619Z] INFO: Environment: development
+[2025-05-15T20:12:56.677Z] INFO: Generating new RSA key pair with ID 1
+[2025-05-15T20:12:56.998Z] INFO: RSA key pair generated and stored in memory successfully
+[2025-05-15T20:12:57.024Z] INFO: Central Bank Service initialized in PRODUCTION mode
+[2025-05-15T20:12:57.025Z] INFO: Using Central Bank URL: https://henno.cfd/central-bank
+[2025-05-15T20:12:57.051Z] INFO: Test routes enabled - FOR DEVELOPMENT USE ONLY
+[2025-05-15T20:12:57.051Z] INFO: Application initialization completed
+[2025-05-15T20:12:57.051Z] WARN: This is a test warning message
+[2025-05-15T20:12:57.051Z] ERROR: This is a test error message - Test error
+[2025-05-15T20:12:57.051Z] DEBUG: This is a debug message with details about the environment
+[2025-05-15T20:12:57.053Z] INFO: JMB Pank server running on port 3000
+[2025-05-15T20:12:57.053Z] INFO: API Documentation available at http://localhost:3000/api/docs
+[2025-05-15T20:12:57.053Z] INFO: JWKS available at http://localhost:3000/api/transactions/jwks
+[2025-05-15T20:12:57.054Z] INFO: RSA key pair generated and stored in memory successfully
+[2025-05-15T20:12:57.054Z] INFO: Connected to SQLite database
+[2025-05-15T20:12:57.055Z] INFO: Database tables created successfully
+[2025-05-15T20:12:58.627Z] INFO: Last used bank prefix: JMB
+[2025-05-15T20:12:58.627Z] INFO: Bank prefix unchanged: JMB
+[2025-05-15T20:12:59.066Z] INFO: Sample transaction processed: transfer of €1000 from account JMB123 to account JMB456
+[2025-05-15T20:12:59.066Z] INFO: User johndoe logged in successfully
+[2025-05-15T20:12:59.066Z] WARN: Failed login attempt for user testuser - Invalid credentials
+[2025-05-15T20:12:59.066Z] ERROR: Transaction failed - Insufficient funds
+[2025-05-15T20:13:26.763Z] INFO: Registration request received: {
+  "username": "jonnn",
+  "password": "12345678",
+  "fullName": "jon jon",
+  "email": "user@example.com"
+}
+[2025-05-15T20:13:26.763Z] INFO: Registration attempt for username: jonnn, email: user@example.com
+[2025-05-15T20:13:26.764Z] INFO: Creating user in database...
+[2025-05-15T20:13:26.766Z] ERROR: Database error during user creation: {
+  "message": "Email already exists",
+  "code": "USER_002",
+  "status": 400,
+  "details": {
+    "field": "email",
+    "value": "user@example.com"
+  },
+  "originalError": null
+}
+[2025-05-15T20:13:26.766Z] ERROR: Registration failed [USER_002] Status: 400 - Email already exists
+[2025-05-15T20:13:34.292Z] INFO: Registration request received: {
+  "username": "jonnn",
+  "password": "12345678",
+  "fullName": "jon jon",
+  "email": "use1@example.com"
+}
+[2025-05-15T20:13:34.292Z] INFO: Registration attempt for username: jonnn, email: use1@example.com
+[2025-05-15T20:13:34.292Z] INFO: Creating user in database...
+[2025-05-15T20:13:34.304Z] ERROR: Database error during user creation: {
+  "message": "Failed to create user",
+  "code": "USER_004",
+  "status": 500,
+  "details": {
+    "operation": "database_insert"
+  },
+  "originalError": null
+}
+[2025-05-15T20:13:34.304Z] ERROR: Registration failed [USER_004] Status: 500 - Failed to create user
+[2025-05-15T20:13:47.801Z] INFO: Login attempt for username: jonnn
+[2025-05-15T20:13:47.808Z] INFO: User jonnn (ID: 5) logged in successfully, token issued
+[2025-05-15T20:13:47.813Z] INFO: Token verification successful for user jonnn
+[2025-05-15T20:13:47.813Z] INFO: User jonnn authenticated successfully for GET /user
+[2025-05-15T20:13:47.816Z] INFO: Token verification successful for user jonnn
+[2025-05-15T20:13:47.816Z] INFO: User jonnn authenticated successfully for GET /user
+[2025-05-15T20:13:54.974Z] INFO: Token verification successful for user jonnn
+[2025-05-15T20:13:54.974Z] INFO: User jonnn authenticated successfully for POST /
+[2025-05-15T20:13:54.988Z] INFO: Token verification successful for user jonnn
+[2025-05-15T20:13:54.988Z] INFO: User jonnn authenticated successfully for GET /user
+[2025-05-15T20:18:25.652Z] INFO: Database initialization started
+[2025-05-15T20:18:25.654Z] INFO: JMB Pank application starting up
+[2025-05-15T20:18:25.654Z] INFO: Environment: development
+[2025-05-15T20:18:25.713Z] INFO: Generating new RSA key pair with ID 1
+[2025-05-15T20:18:25.822Z] INFO: RSA key pair generated and stored in memory successfully
+[2025-05-15T20:18:25.849Z] INFO: Central Bank Service initialized in PRODUCTION mode
+[2025-05-15T20:18:25.849Z] INFO: Using Central Bank URL: https://henno.cfd/central-bank
+[2025-05-15T20:18:25.876Z] INFO: Test routes enabled - FOR DEVELOPMENT USE ONLY
+[2025-05-15T20:18:25.876Z] INFO: Application initialization completed
+[2025-05-15T20:18:25.876Z] WARN: This is a test warning message
+[2025-05-15T20:18:25.876Z] ERROR: This is a test error message - Test error
+[2025-05-15T20:18:25.876Z] DEBUG: This is a debug message with details about the environment
+[2025-05-15T20:18:25.879Z] INFO: JMB Pank server running on port 3000
+[2025-05-15T20:18:25.879Z] INFO: API Documentation available at http://localhost:3000/api/docs
+[2025-05-15T20:18:25.879Z] INFO: JWKS available at http://localhost:3000/api/transactions/jwks
+[2025-05-15T20:18:25.880Z] INFO: RSA key pair generated and stored in memory successfully
+[2025-05-15T20:18:25.880Z] INFO: Connected to SQLite database
+[2025-05-15T20:18:25.881Z] INFO: Database tables created successfully
+[2025-05-15T20:18:27.670Z] INFO: Last used bank prefix: JMB
+[2025-05-15T20:18:27.671Z] INFO: Bank prefix has changed from JMB to your_bank_prefix
+[2025-05-15T20:18:27.671Z] INFO: Updating account numbers from prefix JMB to your_bank_prefix
+[2025-05-15T20:18:27.672Z] INFO: Found 2 accounts to update
+[2025-05-15T20:18:27.683Z] INFO: Updated account JMB026758ec3a82412592de to your_bank_prefix026758ec3a82412592de
+[2025-05-15T20:18:27.685Z] INFO: Updated account JMB09ad0268dcd3435dbb4e to your_bank_prefix09ad0268dcd3435dbb4e
+[2025-05-15T20:18:27.685Z] INFO: Successfully updated 2 accounts
+[2025-05-15T20:18:27.685Z] INFO: Updated 2 account numbers with new bank prefix
+[2025-05-15T20:18:27.685Z] INFO: Bank prefix file updated to your_bank_prefix
+[2025-05-15T20:18:27.885Z] INFO: Sample transaction processed: transfer of €1000 from account JMB123 to account JMB456
+[2025-05-15T20:18:27.885Z] INFO: User johndoe logged in successfully
+[2025-05-15T20:18:27.885Z] WARN: Failed login attempt for user testuser - Invalid credentials
+[2025-05-15T20:18:27.885Z] ERROR: Transaction failed - Insufficient funds
+[2025-05-15T20:18:32.457Z] WARN: Authentication failed: Invalid token format - invalid signature
+[2025-05-15T20:18:32.460Z] WARN: Authentication failed: Invalid token format - invalid signature
+[2025-05-15T20:18:32.462Z] WARN: Authentication failed: Invalid token format - invalid signature
+[2025-05-15T20:18:32.464Z] WARN: Authentication failed: Invalid token format - invalid signature
+[2025-05-15T20:18:32.466Z] WARN: Authentication failed: Invalid token format - invalid signature
+[2025-05-15T20:18:32.469Z] WARN: Authentication failed: Invalid token format - invalid signature
+[2025-05-15T20:18:34.276Z] WARN: Authentication failed: Invalid token format - invalid signature
+[2025-05-15T20:18:50.177Z] INFO: Registration request received: {
+  "username": "tenn",
+  "password": "12345678",
+  "fullName": "jon jon",
+  "email": "user2@example.com"
+}
+[2025-05-15T20:18:50.177Z] INFO: Registration attempt for username: tenn, email: user2@example.com
+[2025-05-15T20:18:50.177Z] INFO: Creating user in database...
+[2025-05-15T20:18:50.181Z] ERROR: Database error during user creation: {
+  "message": "Failed to create user",
+  "code": "USER_004",
+  "status": 500,
+  "details": {
+    "operation": "database_insert"
+  },
+  "originalError": null
+}
+[2025-05-15T20:18:50.181Z] ERROR: Registration failed [USER_004] Status: 500 - Failed to create user
+[2025-05-15T20:19:05.799Z] INFO: Login attempt for username: tenn
+[2025-05-15T20:19:05.801Z] INFO: User tenn (ID: 6) logged in successfully, token issued
+[2025-05-15T20:19:05.806Z] INFO: Token verification successful for user tenn
+[2025-05-15T20:19:05.806Z] INFO: User tenn authenticated successfully for GET /user
+[2025-05-15T20:19:05.808Z] INFO: Token verification successful for user tenn
+[2025-05-15T20:19:05.809Z] INFO: User tenn authenticated successfully for GET /user
+[2025-05-15T20:19:47.455Z] INFO: Token verification successful for user tenn
+[2025-05-15T20:19:47.455Z] INFO: User tenn authenticated successfully for GET /user
+[2025-05-15T20:19:47.457Z] INFO: Token verification successful for user tenn
+[2025-05-15T20:19:47.458Z] INFO: User tenn authenticated successfully for GET /user
+[2025-05-15T20:19:47.460Z] INFO: Token verification successful for user tenn
+[2025-05-15T20:19:47.460Z] INFO: User tenn authenticated successfully for GET /user
+[2025-05-15T20:19:47.462Z] INFO: Token verification successful for user tenn
+[2025-05-15T20:19:47.462Z] INFO: User tenn authenticated successfully for GET /user
+[2025-05-15T20:19:47.464Z] INFO: Token verification successful for user tenn
+[2025-05-15T20:19:47.464Z] INFO: User tenn authenticated successfully for GET /user
+[2025-05-15T20:19:47.467Z] INFO: Token verification successful for user tenn
+[2025-05-15T20:19:47.467Z] INFO: User tenn authenticated successfully for GET /user
+[2025-05-15T20:22:51.550Z] INFO: Database initialization started
+[2025-05-15T20:22:51.552Z] INFO: JMB Pank application starting up
+[2025-05-15T20:22:51.552Z] INFO: Environment: development
+[2025-05-15T20:22:51.611Z] INFO: Generating new RSA key pair with ID 1
+[2025-05-15T20:22:51.886Z] INFO: RSA key pair generated and stored in memory successfully
+[2025-05-15T20:22:51.913Z] INFO: Central Bank Service initialized in PRODUCTION mode
+[2025-05-15T20:22:51.913Z] INFO: Using Central Bank URL: https://henno.cfd/central-bank
+[2025-05-15T20:22:51.939Z] INFO: Test routes enabled - FOR DEVELOPMENT USE ONLY
+[2025-05-15T20:22:51.939Z] INFO: Application initialization completed
+[2025-05-15T20:22:51.939Z] WARN: This is a test warning message
+[2025-05-15T20:22:51.939Z] ERROR: This is a test error message - Test error
+[2025-05-15T20:22:51.939Z] DEBUG: This is a debug message with details about the environment
+[2025-05-15T20:22:51.941Z] INFO: JMB Pank server running on port 3000
+[2025-05-15T20:22:51.941Z] INFO: API Documentation available at http://localhost:3000/api/docs
+[2025-05-15T20:22:51.942Z] INFO: JWKS available at http://localhost:3000/api/transactions/jwks
+[2025-05-15T20:22:51.942Z] INFO: RSA key pair generated and stored in memory successfully
+[2025-05-15T20:22:51.942Z] INFO: Connected to SQLite database
+[2025-05-15T20:22:51.943Z] INFO: Database tables created successfully
+[2025-05-15T20:22:53.562Z] INFO: Last used bank prefix: your_bank_prefix
+[2025-05-15T20:22:53.563Z] INFO: Bank prefix unchanged: your_bank_prefix
+[2025-05-15T20:22:53.948Z] INFO: Sample transaction processed: transfer of €1000 from account JMB123 to account JMB456
+[2025-05-15T20:22:53.948Z] INFO: User johndoe logged in successfully
+[2025-05-15T20:22:53.948Z] WARN: Failed login attempt for user testuser - Invalid credentials
+[2025-05-15T20:22:53.948Z] ERROR: Transaction failed - Insufficient funds
+[2025-05-15T20:22:56.151Z] INFO: Token verification successful for user tenn
+[2025-05-15T20:22:56.151Z] WARN: Authentication failed: Invalid session for user tenn
+[2025-05-15T20:22:56.154Z] INFO: Token verification successful for user tenn
+[2025-05-15T20:22:56.154Z] WARN: Authentication failed: Invalid session for user tenn
+[2025-05-15T20:22:56.155Z] INFO: Token verification successful for user tenn
+[2025-05-15T20:22:56.155Z] WARN: Authentication failed: Invalid session for user tenn
+[2025-05-15T20:22:56.158Z] INFO: Token verification successful for user tenn
+[2025-05-15T20:22:56.158Z] WARN: Authentication failed: Invalid session for user tenn
+[2025-05-15T20:22:56.159Z] INFO: Token verification successful for user tenn
+[2025-05-15T20:22:56.159Z] WARN: Authentication failed: Invalid session for user tenn
+[2025-05-15T20:22:56.167Z] INFO: Token verification successful for user tenn
+[2025-05-15T20:22:56.167Z] WARN: Authentication failed: Invalid session for user tenn
+[2025-05-15T20:22:58.362Z] INFO: Token verification successful for user tenn
+[2025-05-15T20:22:58.362Z] WARN: Authentication failed: Invalid session for user tenn
+[2025-05-15T20:23:14.468Z] INFO: Registration request received: {
+  "username": "troll",
+  "password": "12345678",
+  "fullName": "jon jon",
+  "email": "user3@example.com"
+}
+[2025-05-15T20:23:14.468Z] INFO: Registration attempt for username: troll, email: user3@example.com
+[2025-05-15T20:23:14.468Z] INFO: Creating user in database...
+[2025-05-15T20:23:14.473Z] INFO: User registered successfully: troll (ID: 7)
+[2025-05-15T20:23:24.478Z] INFO: Login attempt for username: troll
+[2025-05-15T20:23:24.480Z] INFO: User troll (ID: 7) logged in successfully, token issued
+[2025-05-15T20:23:24.483Z] INFO: Token verification successful for user troll
+[2025-05-15T20:23:24.484Z] INFO: User troll authenticated successfully for GET /user
+[2025-05-15T20:23:24.487Z] INFO: Token verification successful for user troll
+[2025-05-15T20:23:24.487Z] INFO: User troll authenticated successfully for GET /user

@@ -88,6 +88,54 @@ if (process.env.NODE_ENV !== 'production') {
       res.status(500).json({ error: 'Server error' });
     }
   });
+
+  // Test endpoint to manually update bank prefix
+  router.post('/update-bank-prefix', async (req, res) => {
+    try {
+      const { oldPrefix, newPrefix } = req.body;
+
+      if (!oldPrefix || !newPrefix) {
+        return res.status(400).json({
+          error: 'Missing required fields',
+          message: 'Both oldPrefix and newPrefix are required',
+        });
+      }
+
+      if (oldPrefix.length !== 3 || newPrefix.length !== 3) {
+        return res.status(400).json({
+          error: 'Invalid prefix length',
+          message: 'Bank prefixes must be exactly 3 characters long',
+        });
+      }
+
+      console.log(`Manual bank prefix update requested: ${oldPrefix} -> ${newPrefix}`);
+
+      // Import the Account model
+      const Account = require('../models/account');
+
+      // Update account numbers
+      const updatedCount = await Account.updateBankPrefix(oldPrefix, newPrefix);
+
+      // Update the prefix file with the new prefix
+      const prefixFilePath = path.join(__dirname, '..', 'data', 'last_bank_prefix.txt');
+      fs.writeFileSync(prefixFilePath, newPrefix);
+
+      console.log(`Bank prefix manually updated from ${oldPrefix} to ${newPrefix}`);
+      console.log(`Updated ${updatedCount} account numbers`);
+
+      res.json({
+        success: true,
+        message: `Bank prefix updated from ${oldPrefix} to ${newPrefix}`,
+        updatedAccounts: updatedCount,
+      });
+    } catch (error) {
+      console.error('Error updating bank prefix:', error);
+      res.status(500).json({
+        error: 'Failed to update bank prefix',
+        message: error.message,
+      });
+    }
+  });
 }
 
 module.exports = router;

@@ -101,6 +101,25 @@ Pankadevaheliste ülekannete tegemiseks on vaja:
    npm start
    ```
 
+## Panga prefiksi muutmine
+
+Kui panga prefiks muutub (näiteks panga registreerimisel keskpangas), siis rakendus uuendab automaatselt kõik kontode numbrid, säilitades konto numbri unikaalse osa. See tagab, et kontod jäävad samaks, muutub ainult prefiksi osa.
+
+1. **Automaatne uuendamine**
+   Kui muudate .env failis BANK_PREFIX väärtust ja taaskäivitate rakenduse, siis kontode numbrid uuendatakse automaatselt.
+
+2. **Käsitsi uuendamine** (ainult arenduskeskkonnas)
+   Arenduskeskkonnas saate kasutada järgmist API otspunkti:
+   ```
+   POST /api/test/update-bank-prefix
+   {
+     "oldPrefix": "JMB",
+     "newPrefix": "NEW"
+   }
+   ```
+
+Näide: Kui konto number oli `JMB1234567890` ja uus prefiks on `NEW`, siis uus konto number on `NEW1234567890`.
+
 ## Nginx seadistamine
 
 Järgige neid samme, et seadistada Nginx veebiserverit JMB Panga rakenduse jaoks:

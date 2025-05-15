@@ -70,6 +70,12 @@ class User {
         throw createError('USERNAME_EXISTS', { field: 'username', value: username });
       }
 
+      // Also check if email already exists
+      const existingEmail = await get('SELECT * FROM users WHERE email = ?', [email]);
+      if (existingEmail) {
+        throw createError('EMAIL_EXISTS', { field: 'email', value: email });
+      }
+
       // Hash the password
       const salt = crypto.randomBytes(16).toString('hex');
       const passwordHash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
@@ -77,16 +83,16 @@ class User {
       // Create user
       const result = await run(
         `INSERT INTO users (
-          username, 
-          password_hash, 
-          password_salt, 
-          full_name, 
+          username,
+          password_hash,
+          password_salt,
+          full_name,
           email
         ) VALUES (?, ?, ?, ?, ?)`,
         [username, passwordHash, salt, fullName, email]
       );
 
-      if (result.id) {
+      if (result.lastID) {
         const user = await this.getByUsername(username);
         return this.excludePassword(user);
       }
