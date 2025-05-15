@@ -1,6 +1,58 @@
 const { query, run, get } = require('./db');
 const crypto = require('crypto');
 
+// Define error codes with descriptions for better logging and UI display
+const ErrorCodes = {
+  USERNAME_EXISTS: {
+    code: 'USER_001',
+    message: 'Username already exists',
+    description: 'The username is already taken by another user',
+    status: 400
+  },
+  EMAIL_EXISTS: {
+    code: 'USER_002',
+    message: 'Email already exists',
+    description: 'The email address is already registered',
+    status: 400
+  },
+  CONSTRAINT_VIOLATION: {
+    code: 'USER_003',
+    message: 'Username or email already exists',
+    description: 'Either the username or email is already in use',
+    status: 400
+  },
+  CREATION_FAILED: {
+    code: 'USER_004',
+    message: 'Failed to create user',
+    description: 'Could not create user due to a database error',
+    status: 500
+  },
+  DATABASE_ERROR: {
+    code: 'DB_001',
+    message: 'Database error occurred',
+    description: 'An unexpected database error occurred',
+    status: 500
+  },
+  USER_NOT_FOUND: {
+    code: 'USER_005',
+    message: 'User not found',
+    description: 'The requested user was not found in the database',
+    status: 404
+  }
+};
+
+// Helper to create standardized error objects
+function createError(errorType, additionalDetails = {}) {
+  const errorInfo = ErrorCodes[errorType];
+  const error = new Error(errorInfo.message);
+  error.code = errorInfo.code;
+  error.status = errorInfo.status;
+  error.description = errorInfo.description;
+  error.details = additionalDetails;
+  
+  return error;
+}
+
 class User {
   /**
    * Create a new user
@@ -12,6 +64,12 @@ class User {
    */
   static async create(username, password, fullName, email) {
     try {
+      // First check if username already exists to avoid race condition
+      const existingUser = await this.getByUsername(username);
+      if (existingUser) {
+        throw createError('USERNAME_EXISTS', { field: 'username', value: username });
+      }
+      
       // Hash the password
       const salt = crypto.randomBytes(16).toString('hex');
       const passwordHash = crypto
@@ -35,12 +93,35 @@ class User {
         return this.excludePassword(user);
       }
       
-      throw new Error('Failed to create user');
+      throw createError('CREATION_FAILED', { operation: 'database_insert' });
     } catch (error) {
-      if (error.code === 'SQLITE_CONSTRAINT') {
-        throw new Error('Username already exists');
+      // If error already has our custom format, just throw it
+      if (error.code && error.description) {
+        throw error;
       }
-      throw error;
+      
+      // Handle SQLite constraint violation (username/email unique constraint)
+      if (error.code === 'SQLITE_CONSTRAINT') {
+        if (error.message && error.message.includes('UNIQUE constraint failed: users.username')) {
+          throw createError('USERNAME_EXISTS', { field: 'username', value: username });
+        } else if (error.message && error.message.includes('UNIQUE constraint failed: users.email')) {
+          throw createError('EMAIL_EXISTS', { field: 'email', value: email });
+        } else {
+          throw createError('CONSTRAINT_VIOLATION', { 
+            fields: ['username', 'email'], 
+            values: [username, email],
+            originalError: String(error.message) 
+          });
+        }
+      }
+      
+      // General database error
+      const dbError = createError('DATABASE_ERROR', { 
+        message: error.message,
+        originalError: String(error.message || error)
+      });
+      
+      throw dbError;
     }
   }
 
@@ -54,7 +135,12 @@ class User {
       const user = await get('SELECT * FROM users WHERE username = ?', [username]);
       return user || null;
     } catch (error) {
-      throw error;
+      throw createError('DATABASE_ERROR', {
+        operation: 'get_user_by_username',
+        username: username,
+        message: error.message,
+        originalError: String(error.message || error)
+      });
     }
   }
 
@@ -82,7 +168,17 @@ class User {
       
       return null;
     } catch (error) {
-      throw error;
+      // Pass through our custom errors
+      if (error.code && error.description) {
+        throw error;
+      }
+      
+      throw createError('DATABASE_ERROR', {
+        operation: 'validate_credentials',
+        username: username,
+        message: error.message,
+        originalError: String(error.message || error)
+      });
     }
   }
 
@@ -95,7 +191,11 @@ class User {
       const users = await query('SELECT * FROM users');
       return users.map(user => this.excludePassword(user));
     } catch (error) {
-      throw error;
+      throw createError('DATABASE_ERROR', {
+        operation: 'get_all_users',
+        message: error.message,
+        originalError: String(error.message || error)
+      });
     }
   }
 
@@ -111,5 +211,9 @@ class User {
     return safeUser;
   }
 }
+
+// Export error codes and helper for use in controllers
+User.ErrorCodes = ErrorCodes;
+User.createError = createError;
 
 module.exports = User;

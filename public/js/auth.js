@@ -26,30 +26,55 @@ const Auth = (() => {
     // Register new user
     const register = async (username, password, fullName, email) => {
         try {
+            console.log('Attempting to register user:', username);
+            
+            // Create the request data
+            const userData = {
+                username,
+                password,
+                fullName,
+                email
+            };
+            
+            console.log('Registration data:', userData);
+            
+            // Send the request
             const response = await fetch('/api/users/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    username,
-                    password,
-                    fullName,
-                    email
-                })
+                body: JSON.stringify(userData)
             });
             
-            const data = await response.json();
-            
-            if (!response.ok) {
-                throw new Error(data.error || 'Registration failed');
+            let data;
+            // Check if we got a valid JSON response
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                // If not JSON, get the text response and log it
+                const textResponse = await response.text();
+                console.error('Received non-JSON response:', textResponse);
+                throw new Error('Server returned a non-JSON response. Please try again later.');
+            } else {
+                // Parse the JSON response
+                data = await response.json();
+                console.log('Registration response:', data);
             }
             
-            return {
-                success: true,
-                user: data
-            };
+            // If status is in 2xx range, consider it a success even if there are minor issues
+            if (response.status >= 200 && response.status < 300) {
+                console.log('Registration successful with status:', response.status);
+                return {
+                    success: true,
+                    user: data
+                };
+            }
+            
+            // Otherwise, handle as error
+            throw new Error(data.error || 'Registration failed');
+            
         } catch (error) {
+            console.error('Registration error:', error);
             return {
                 success: false,
                 error: error.message
@@ -71,6 +96,15 @@ const Auth = (() => {
                 })
             });
             
+            // Check if we got a valid JSON response
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                // If not JSON, get the text response and log it
+                const textResponse = await response.text();
+                console.error('Received non-JSON response:', textResponse);
+                throw new Error('Server returned a non-JSON response. Please try again later.');
+            }
+            
             const data = await response.json();
             
             if (!response.ok) {
@@ -89,6 +123,7 @@ const Auth = (() => {
                 user: data.user
             };
         } catch (error) {
+            console.error('Login error:', error);
             return {
                 success: false,
                 error: error.message
@@ -231,7 +266,31 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        // Additional validation
+        if (!username || !fullName || !email) {
+            errorElement.textContent = 'All fields are required';
+            return;
+        }
+        
+        // Email validation
+        if (!email.includes('@') || !email.includes('.')) {
+            errorElement.textContent = 'Please enter a valid email address';
+            return;
+        }
+        
+        console.log('Form validation passed, attempting to register...');
+        
+        // Disable the submit button and show loading state
+        const submitButton = this.querySelector('button[type="submit"]');
+        const originalButtonText = submitButton.textContent;
+        submitButton.disabled = true;
+        submitButton.textContent = 'Creating account...';
+        
         const result = await Auth.register(username, password, fullName, email);
+        
+        // Re-enable the button
+        submitButton.disabled = false;
+        submitButton.textContent = originalButtonText;
         
         if (result.success) {
             successElement.textContent = 'Registration successful! You can now login.';
